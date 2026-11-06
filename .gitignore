@@ -1,0 +1,13 @@
+blend_ode
+blend_ode_be
+dont-check-others
+sow_docs
+/files_md.sh
+project-memory-starter
+files_md.sh
+dbuse.txt
+full_code.txt
+git_rules.txt
+
+# IDE project files (not part of the documented deliverable)
+.idea/
