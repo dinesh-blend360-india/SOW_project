@@ -139,3 +139,10 @@ BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
 - **Priority**: —
 - **Affected repository**: root
 - **Description**: This task. See `SESSION_LOG.md` for the session that created it.
+
+## Update 2026-11-09
+- **SOW-CP21 to SOW-CP25: COMPLETED** (see CHANGELOG).
+- **NEW — DEMO-ACCESS:** get the demo user `FE_SOW_LEXICAL_EDITOR` (or `FE_ADMIN`) through the admin screens, or use a deal the user already owns. Status: BLOCKED on an admin.
+- **NEW — BACKEND-500-SYNC:** `/pricing_tool/hubspot_deals_sync_info` returns 500. Needs the backend traceback before a fix. Status: BLOCKED on logs.
+- **DONE — PRICING-START-DATE-CRASH:** fixed in 8853099.
+- **Next:** SOW-CP26 (toolbar).

@@ -227,3 +227,14 @@ the next session's start.
 ### Recommended next actions
 Get the user's decision on the docs-move question before any further commits in `blend_ode_be`
 touch the same files, to avoid committing a half-decided state.
+
+## Session: 2026-11-06 to 2026-11-09 — CP-18 to CP-25, fixes, demo routes
+
+- **Repositories:** blend_ode, blend_ode_be, root (docs only).
+- **Built and committed:** CP-21 (21c1f01), CP-22 (5cb4da9), CP-23 (2228568), CP-24 (83ae4a2) in blend_ode_be; CP-25 editor shell (df475bb) in blend_ode.
+- **Fixes committed:** Windows collab startup (166120c, blend_ode_be); pricing crash on missing project start date (8853099) and editor import (485d3cc) in blend_ode.
+- **Not committed:** temporary demo routes in `blend_ode/src/App.tsx` and the sandbox page (`src/sow_module/editor/SowSandbox.tsx`) with its print and format options. A working-tree truncation of `App.tsx` happened outside this session and was recovered from git.
+- **Tests:** editor 28 pass; collab 51 pass (6 live-Snowflake skipped); backend 115 pass; existing DraftEditor tests 22 pass; existing DraftEditorScreen integration 60 fail (pre-existing).
+- **Pushed:** nothing in this session.
+- **Unresolved:** backend 500 on `/pricing_tool/hubspot_deals_sync_info` (needs the backend traceback); access for the live editor (feature flag or deal access, owned by an admin).
+- **Next:** CP-26 toolbar in the live editor, after the access and 500 issues are resolved for the demo.

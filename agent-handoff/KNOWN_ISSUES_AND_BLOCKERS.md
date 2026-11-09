@@ -144,3 +144,10 @@ deliberately.
   `CURRENT_PROJECT_STATE.md`/`TASK_BOARD.md`) so it isn't mistaken for a regression. Lexical and
   Yjs packages are installed; the shared TypeScript contracts exist; no component wires them into
   any route yet, and no `WebSocket`/`y-websocket` client code exists in the frontend at all.
+
+## Update 2026-11-09
+- **RESOLVED:** pricing pages crash with "Cannot read properties of null (reading 'replace')" when a deal has no project start date (8853099).
+- **RESOLVED:** editor import error for `LexicalErrorBoundary` (485d3cc). Collab service would not start on Windows (166120c).
+- **OPEN:** `/pricing_tool/hubspot_deals_sync_info` returns 500. The browser reports it as CORS because error responses lose the CORS headers. Cause unknown until the backend traceback is captured.
+- **OPEN:** live editor returns 403 for users without `FE_SOW_LEXICAL_EDITOR`/`FE_ADMIN` or deal access. This is an access rule, not a bug.
+- **OPEN:** `blend_ode/src/App.tsx` was truncated once outside this session. Recovered from git. Check that no one else edits it.

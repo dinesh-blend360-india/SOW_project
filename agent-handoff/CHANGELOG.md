@@ -91,3 +91,20 @@ repository.
 *Earlier history*: both app repos have commits before 2026-10-30 (the pricing tool / SOW Studio
 application itself, pre-existing before the live-collaboration editor initiative). See each repo's
 own `git log` for that history; it is not transcribed here.
+
+## 2026-11-06 to 2026-11-09 — SOW editor CP-21 to CP-25, fixes
+
+### blend_ode_be
+- `feat(sow_module)` CP-21 collab service shell, ticket verification, FastAPI client, boundary and secret checks (21c1f01)
+- `feat(sow_module)` CP-22 rooms, lease manager, persist queue (5cb4da9)
+- `feat(sow_module)` CP-23 snapshots, reopen, seeding (2228568)
+- `feat(sow_module)` CP-24 WebSocket protocol, role gating, validation boundary (83ae4a2)
+- `fix(sow_module)` collab service starts on Windows (166120c)
+
+### blend_ode
+- `feat(sow_module)` CP-25 LexicalDraftEditor shell with the same props as DraftEditor (df475bb)
+- `fix(pricing)` pricing pages no longer crash on a missing project start date (8853099)
+- `fix(sow_module)` named import for LexicalErrorBoundary (485d3cc)
+
+### Root
+- `docs(sow_module)` CP-25 record (407467b)

@@ -80,3 +80,10 @@ See `TASK_BOARD.md` for the itemized, status-tracked list.
 See `KNOWN_ISSUES_AND_BLOCKERS.md` for the full, itemized list — most notably the committed secrets
 in `blend_ode` (#1) and the lack of CI in either repo (#2), both of which predate and are unrelated
 to the SOW module work but are relevant to anyone continuing development here.
+
+## Update 2026-11-09
+- **CP-21 to CP-25 are complete.** The collab service shell, rooms, snapshots, WebSocket protocol, and the frontend editor shell are committed.
+- **The live editor is not reachable for a demo yet.** It needs the backend, the collab service, and a user with `FE_SOW_LEXICAL_EDITOR` (or `FE_ADMIN`) and access to the deal.
+- **A local sandbox page exists** (`/sow-sandbox`, temporary, uncommitted) with formatting, lists, and A4 print.
+- **Open:** backend 500 on `/pricing_tool/hubspot_deals_sync_info`; the CORS message is a side effect of that 500.
+- **Next:** CP-26 (toolbar in the live editor).
