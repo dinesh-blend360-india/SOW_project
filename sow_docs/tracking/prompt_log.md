@@ -471,3 +471,10 @@ Incident: during the session, `blend_ode/src/App.tsx` in the working tree was cu
 Verification: typecheck, ESLint on the editor folder, and production build pass. Editor tests: 28 pass. The sandbox and print output were not checked in a browser.
 Open items: the live harness needs the backend running and the user's account to have `FE_SOW_LEXICAL_EDITOR` (or `FE_ADMIN`) and access to the deal. The 403 for deal 64986161471 is a real access denial. `/pricing_tool/hubspot_deals_sync_info` returns 500, which hides the CORS headers. The backend traceback is still needed to fix it.
 Handoff to next prompt: CP-26 — toolbar framework and basic formatting in the live editor.
+
+## CP-26 to CP-28: toolbar, formatting parity, list depth (2026-11-09)
+- blend_ode `cedf2a1` CP-26: toolbar (bold, italic, underline, strikethrough, H1-H3, alignment, undo/redo), capability-gated.
+- blend_ode `c1513aa` CP-27: highlight, font size, font family from html-contract.json. Import now keeps span font-size and font-family. blend_ode_be `e29ecf7` re-vendors shared; synthetic-15/16 expected JSON updated (style "" to the real style). Exported HTML fixtures unchanged.
+- blend_ode `70d5fdb` CP-28: list buttons, Tab cap at depth 3, paste flattened to remaining depth, import flatten in allowlist.ts. blend_ode_be `1b2d13d` re-vendors shared.
+- Verified: frontend 108 tests pass (sow_module), backend sow_module 115 pass (before CP-28 sync; no Python change in CP-28), typecheck clean, build passes.
+- Not done: server-side list depth in `html_allowlist.py` (streaming sanitizer; needs a tree-based lift to match TS). CP-29 (tables) and CP-30 (merges, properties, export parity) not started.
