@@ -478,3 +478,9 @@ Handoff to next prompt: CP-26 — toolbar framework and basic formatting in the 
 - blend_ode `70d5fdb` CP-28: list buttons, Tab cap at depth 3, paste flattened to remaining depth, import flatten in allowlist.ts. blend_ode_be `1b2d13d` re-vendors shared.
 - Verified: frontend 108 tests pass (sow_module), backend sow_module 115 pass (before CP-28 sync; no Python change in CP-28), typecheck clean, build passes.
 - Not done: server-side list depth in `html_allowlist.py` (streaming sanitizer; needs a tree-based lift to match TS). CP-29 (tables) and CP-30 (merges, properties, export parity) not started.
+
+## CP-29 and CP-30: tables, merges, cell properties (2026-11-09)
+- blend_ode `4db5c7a`: table insert (size picker), row and column insert and delete (delete asks to confirm), header row, column width presets, merge and split, cell shading, vertical alignment, Tab between cells. Stored on the nodes, so they go through Yjs and HTML export.
+- Allowlist bug fixed: the contract group "table-box" was never expanded, so widths, shading and borders were stripped on export. Fixed in TS and Python (blend_ode_be `bce5042`, plus shared re-vendor). Lexical's default cell width, border, vertical-align and header background are stripped on import, because the exporter writes them back on every cell.
+- Verified: frontend 116 sow_module tests pass, backend 116 sow_module tests pass, typecheck and build clean.
+- Not done: drag-to-resize handles (width presets instead), table border and padding dialogs, python-docx and reportlab support for merged cells (export parity), a two-client sync test for widths, real-browser check of the table UI, and server-side list depth in `html_allowlist.py`.
