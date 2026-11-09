@@ -498,3 +498,38 @@ Handoff to next prompt: CP-26 — toolbar framework and basic formatting in the 
 - CP-36: editor API (getHtml, setHtml, insertContent with cursor/end/afterBlock/replaceBlock, focus, scrollToBlock). Programmatic changes use their own tag and never fire onContentChange. Add-ins call the existing services unchanged through `addIns.ts`. The add-in marker (data-add-in-id) is carried on blocks and list items. Existing add-in tests: 64 pass.
 - Verified: frontend sow_module tests 163 pass, typecheck and build clean.
 - Not done or not verified: the live harness in a real browser (needs backend and session); two-client sync; scroll-to-add-in visuals; the readOnly server refusal (backend already gates viewers; not re-tested here).
+
+## CP-37: Owner checkpoint to the draft system (2026-11-09)
+Summary: The Owner exports the live document to HTML from the Lexical v1 Yjs shape (verified with a spike), passes it through the shared allowlist, and calls FastAPI checkpoint. Saves on explicit request, after a quiet period, and when the last client leaves. Also fixed the CP-24 validation boundary, which never checked real Lexical content (it walked a fragment root).
+Decisions/assumptions: Base revision is read from document-state immediately before each send. On 409 or 428, refresh and retry once; if the revision moved, do not retry (see CP-38). Unknown block types fail closed. Add @lexical/yjs and @lexical/rich-text 0.44.0 and happy-dom 20.14.6 to the collab service (user asked for "what is good").
+Registry (new or changed):
+- file: sow_module/collab/src/owner/yjs-html.ts: Yjs-to-HTML export (Lexical v1 shape) and the shared-allowlist sanitizer
+- class / function: sanitizedRootHtml, UnknownBlockError in yjs-html.ts: export and fail-closed error
+- class / function: runCheckpoint in sow_module/collab/src/owner/checkpoint.ts: one checkpoint with refresh and retry
+- class / function: CheckpointCoordinator in sow_module/collab/src/owner/checkpoint-coordinator.ts: timer, explicit, last-client-leave; one run at a time
+- class / function: validateUpdate (walkText) in sow_module/collab/src/owner/validation.ts: walks the Lexical root
+- endpoint: none new (uses the existing internal checkpoint)
+- feature: CHECKPOINT_NOW and automatic checkpoints: built (Node side)
+Open questions for the user: none for CP-37.
+Handoff to next prompt: CP-38 screen integration.
+
+## CP-38: Screen integration behind the flag and other writers (2026-11-09)
+Summary: DraftEditorScreen shows the Lexical editor for users with FE_SOW_LEXICAL_EDITOR (or FE_ADMIN with REACT_APP_SOW_LEXICAL_EDITOR=true). In that mode Save and "Save and continue" go to the Owner checkpoint, the screen's autosave is off, and the screen takes the new version and revision from the answer. If another path changed the draft, the Owner refuses to overwrite and tells every client.
+Decisions/assumptions: The Owner's known revision comes from the collab row (persisted after each checkpoint). Explicit saves get a CHECKPOINTED reply even when nothing changed. Version label is "vN", matching crud.py. Admin access depends on a build flag.
+Registry (new or changed):
+- file: sow_module/editor/flag.ts: isLexicalEditorEnabled
+- file: blend_ode/src/pricing-tool/components/DraftEditorScreen.tsx: changed lines: imports; after draftRevisionRef (flag, API ref, DraftEditorView); top of handleSave (checkpoint path); autosave condition; DraftEditor opening tag now DraftEditorView with onReady
+- function: requestCheckpoint in SowCollabProvider.ts: CHECKPOINT_NOW, resolved by CHECKPOINTED
+- function: checkpoint in editorApi.ts (SowEditorApi)
+- feature: flagged Lexical editor in the screen: built
+Open questions for the user: (a) "reload from document-state" after an outside change is a notice, not an automatic reload. A reset of the in-memory room needs a design (see Phase D report). (b) Confirm the flag design: FE_ADMIN needs REACT_APP_SOW_LEXICAL_EDITOR=true in the build.
+Handoff to next prompt: CP-39 freeze and regression.
+
+## CP-39: Core API freeze and Phase D regression (2026-11-09)
+Summary: Wrote the frozen API and the Phase D regression report with a two-user script. Automated suites: no new failures. The two-user run itself has not been done.
+Decisions/assumptions: Pre-existing failures are listed separately (see phaseD_report.md).
+Registry (new or changed):
+- file: sow_docs/tracking/core_api_freeze.md: frozen routes, WebSocket messages, props, close codes (Core API 1.0)
+- file: sow_docs/tracking/phaseD_report.md: regression results and manual test script
+Open questions for the user: run the two-user script and record results in phaseD_report.md.
+Handoff to next prompt: CP-40 presence and chunked sync.
