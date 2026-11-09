@@ -491,3 +491,10 @@ Handoff to next prompt: CP-26 — toolbar framework and basic formatting in the 
 - CP-32: placeholder rule (keep while either bracket remains, unwrap otherwise) as Lexical transforms, incl. table cells. Find and replace panel; replace all is one update. Read-only roles can find, not replace. Limit: matches stay inside one text run.
 - CP-33: block ids in node state (`createState`), exported as `data-block-id` on top-level blocks (paragraph, heading, list, table), read back on import. Paste strips copied ids. Decision to record for the user: ids are in exported HTML, because checkpoint reopen needs them. Property tests with fast-check: 40 random runs.
 - Not verified: two-client Yjs sync of block ids (Lexical syncs node state; not run here). Browser check covers table, find, and paste only.
+
+## CP-34 to CP-36: page chrome, action bar, editor API, add-ins (2026-11-09)
+- CP-34: watermark (sign-offs pending), Blend logo, provisional banner (same wording), read-only label. Historical version = static render of sanitized HTML, no room opened. Watermark and banner sit beside the editor, never in saved HTML (test checks this). Limit: the watermark is not clipped by a resize observer as in DraftEditor; it covers the editor box.
+- CP-35: Save, Download (DOCX, PDF), Copy link with DraftEditor's labels. Status: Saving until the server confirms, then Saved. Leave-page warning only while changes are unconfirmed by the server (pure rule tested; the event itself not run in jsdom).
+- CP-36: editor API (getHtml, setHtml, insertContent with cursor/end/afterBlock/replaceBlock, focus, scrollToBlock). Programmatic changes use their own tag and never fire onContentChange. Add-ins call the existing services unchanged through `addIns.ts`. The add-in marker (data-add-in-id) is carried on blocks and list items. Existing add-in tests: 64 pass.
+- Verified: frontend sow_module tests 163 pass, typecheck and build clean.
+- Not done or not verified: the live harness in a real browser (needs backend and session); two-client sync; scroll-to-add-in visuals; the readOnly server refusal (backend already gates viewers; not re-tested here).
