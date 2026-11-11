@@ -5,153 +5,135 @@ the module's own build plan, a documented open question, or a verified gap found
 inventory are listed — nothing here is invented scope. Use `templates/TASK_ENTRY_TEMPLATE.md` for
 new entries.
 
+**Rewritten 2026-11-11, end of session** (not just appended to) — the previous version had ~10
+stacked "Update" sections with a stale top (e.g. CP-21 still shown `IN_PROGRESS` after CP-48 was
+already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_log.md`.
+
 ---
 
 ## IN_PROGRESS
 
-### SOW-CP21: Node Express skeleton, ticket verification, CI-style checks
-- **Priority**: High
-- **Affected repository**: blend_ode_be (`sow_module/collab/`)
-- **Dependencies**: CP-18/19/20 (complete)
-- **Relevant files**: `blend_ode_be/sow_module/collab/src/`, `sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md` (CP-21 section)
-- **Description**: Build the actual Express + `ws` server that hosts live WebSocket connections,
-  verifies the tickets FastAPI's session endpoint mints, and calls the internal endpoints built in
-  CP-20. Per the module's own build plan — read that prompt in full before starting.
-- **Acceptance criteria**: per the build plan's own CP-21 acceptance checks (not restated here to
-  avoid drift between two copies — read the source).
-- **Notes**: Next checkpoint in the module's sequential build plan; nothing else should jump ahead
-  of it in that module.
-
----
-
-## NOT_STARTED
-
-### SOW-CP25: Two-browser live-editing proof
-- **Priority**: High (first real end-to-end UI milestone for the module)
-- **Affected repository**: both
-- **Dependencies**: CP-21 through CP-24 (not started)
-- **Relevant files**: `sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md`
-- **Description**: The module's build plan's own first real UI milestone — two browser sessions
-  editing the same SOW live. Requires the browser-side Lexical editor and WebSocket client to exist
-  first.
-- **Acceptance criteria**: per the build plan.
-
-### SOW-ROLE: Resolve decisions.md Q2 (who is sow_admin / finalize-capable)
-- **Priority**: Medium
-- **Affected repository**: blend_ode_be
-- **Dependencies**: none technical — needs a product decision from the project owner
-- **Relevant files**: `blend_ode_be/src/sow_module/collab_session.py` (`resolve_role`),
-  `sow_docs/tracking/decisions.md` (Q2)
-- **Description**: The code currently maps `FE_ADMIN` -> `sow_admin`, everyone else who passes
-  `assert_deal_access` -> `editor`. This was built as an explicit, documented stand-in, not a
-  resolution of the open question. Get a real answer, then update `resolve_role` and its tests.
-- **Acceptance criteria**: `decisions.md` Q2 has a recorded user answer; `resolve_role` matches it;
-  `tests/test_sow_module_collab_session.py` and `test_sow_module_collab_internal.py` updated to
-  match the new rule if it differs from today's.
-
-### SOW-FENCE: Independent fencing-token re-verification at checkpoint time
-- **Priority**: Low (documented, deliberate gap, not urgent while the feature isn't live)
-- **Affected repository**: blend_ode_be
-- **Dependencies**: a second, narrowly-scoped Snowflake connection into `BLEND_INTERNAL_IT_APPS.NEXDRAFT` from FastAPI
-- **Relevant files**: `src/sow_module/collab_internal.py` (`checkpoint`)
-- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #7 for the full context.
-- **Acceptance criteria**: `checkpoint` rejects a request whose `fencingToken` doesn't match the
-  live `SOW_COLLAB_LEASE` row for that deal, with a test proving it.
-
-### SOW-RENEW-PRECISION: Per-document lease renewal result, not a batched count
-- **Priority**: High
-- **Affected repository**: blend_ode_be (`sow_module/collab`)
-- **Dependencies**: live Snowflake access to verify the query change safely
-- **Relevant files**: `sow_module/collab/src/data/snowflake-store.ts` (`renewLeases`),
-  `sow_module/collab/src/owner/lease-manager.ts` (`renewAll`)
-- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #14. `renewAll()` can't currently tell "every
-  held lease was actually renewed" apart from "the call succeeded but renewed none of them" — it
-  optimistically refreshes all of them either way. The real-time `onFenced` backstop (built in CP-42)
-  covers the worst consequence (an unprotected second write), but the underlying imprecision remains.
-- **Acceptance criteria**: `renewLeases` (or an added method) reports which specific `dealId`s were
-  actually renewed; `LeaseManager.renewAll()` only refreshes those, and calls `forget()` on any held
-  lease that was not renewed back.
-
-### SOW-PERSIST-RACE: Fix PersistQueue's overlapping-flush data loss
-- **Priority**: High
-- **Affected repository**: blend_ode_be (`sow_module/collab`)
-- **Dependencies**: none technical
-- **Relevant files**: `sow_module/collab/src/owner/persist-queue.ts`
-- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #15. Pre-existing (CP-22), surfaced by CP-42's
-  review. A flush in flight does not stop the next interval tick from starting another for the same
-  document, and a successful flush deletes the whole pending array rather than only the rows it sent
-  — an update enqueued mid-flush is silently lost.
-- **Acceptance criteria**: an in-flight guard per `dealId`; a completed flush removes only the rows it
-  actually sent; a test proving an edit enqueued during an in-flight flush survives to the next tick.
-
-### SOW-FENCE-ATOMIC: Make the Snowflake fencing check atomic with the write
-- **Priority**: Medium-high
-- **Affected repository**: blend_ode_be (`sow_module/collab`)
-- **Dependencies**: live Snowflake access to verify safely
-- **Relevant files**: `sow_module/collab/src/data/snowflake-store.ts` (`appendUpdates`)
-- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #16. The fencing check (`SELECT`) and the write
-  (`MERGE`/insert) are two separate statements, not one transaction.
-- **Acceptance criteria**: the check and the write happen atomically (one transaction, or the check
-  folded into the `MERGE`'s own match condition).
-
-### INFRA-SECRET-ROTATE: Rotate and scrub secrets committed in `blend_ode`
-- **Priority**: High (security)
-- **Affected repository**: blend_ode
-- **Dependencies**: coordination with whoever owns each credential (DB, Agents API key, CKEditor
-  license, Azure AD app registration)
-- **Relevant files**: `.env.development`, `.env.production`, `src/config/MsalConfig.ts`
-- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #1. Rotate every exposed credential; decide
-  whether history-scrubbing is required by policy; create a real `.env.example` afterward
-  (see INFRA-ENV-EXAMPLE below).
-- **Acceptance criteria**: all four secret categories rotated; `.env.development`/`.env.production`
-  no longer contain values that work against production systems; a decision recorded (in
-  `ARCHITECTURAL_DECISIONS.md` or a new note) on whether history was scrubbed and why/why not.
-
-### INFRA-ENV-EXAMPLE: Create `.env.example` for `blend_ode`
-- **Priority**: Medium
-- **Affected repository**: blend_ode
-- **Dependencies**: INFRA-SECRET-ROTATE (do this after rotation, not before, to avoid creating an
-  example from already-compromised values)
-- **Relevant files**: new file `blend_ode/.env.example`
-- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #3. `ENVIRONMENT_AND_SECRETS.md` in this
-  handoff system already lists every variable name and purpose as source material.
-- **Acceptance criteria**: `.env.example` exists with every variable from
-  `ENVIRONMENT_AND_SECRETS.md`'s frontend table, placeholder values only.
-
-### INFRA-CI: Add an automated test-running CI pipeline to both repos
-- **Priority**: Medium
-- **Affected repository**: both
-- **Dependencies**: deciding how to handle the 9 pre-existing backend test failures (xfail them or
-  fix them first, so the pipeline isn't permanently red)
-- **Relevant files**: new `.github/workflows/*.yml` in each repo
-- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #2.
-- **Acceptance criteria**: a PR-triggered workflow in each repo runs the commands in
-  `TESTING_AND_VALIDATION.md` and fails the PR on an unexpected test failure.
-
-### INFRA-MIGRATIONS-CLARIFY: Resolve the `migrations/` vs `db/migrations/` question
-- **Priority**: Low
-- **Affected repository**: blend_ode_be
-- **Dependencies**: an answer from the project owner
-- **Relevant files**: `migrations/`, `db/migrations/`
-- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #5.
-- **Acceptance criteria**: this handoff system's docs updated once the answer is known; if
-  `db/migrations/` is confirmed dead, it's either removed or clearly marked archival.
-
-### INFRA-DEPS-CLARIFY: Resolve `Pipfile` vs `requirements.txt` as the backend's authoritative dependency source
-- **Priority**: Low
-- **Affected repository**: blend_ode_be
-- **Dependencies**: none
-- **Relevant files**: `Pipfile`, `requirements.txt`, `README.md`
-- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #6.
-- **Acceptance criteria**: one is picked as authoritative; the other is either regenerated from it
-  or removed; README updated to match.
+*(none — nothing was left mid-edit at session end)*
 
 ---
 
 ## BLOCKED
 
-*(nothing currently blocked as of this writing — SOW-CP25 above is listed NOT_STARTED rather than
-BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
+### SOW-CP39-MANUAL: Run the two-user manual test
+- **Priority**: High (the module's own acceptance gate for everything built in Phase D onward)
+- **Affected repository**: both
+- **Dependencies**: backend + collab service running together; two real SSO-authenticated accounts
+  with `FE_SOW_LEXICAL_EDITOR`/`FE_ADMIN` and access to the same deal
+- **Relevant files**: `sow_docs/tracking/phaseD_report.md` (the script and a results table to fill in)
+- **Description**: Never run. Needs a human (or two) with real accounts — no agent session so far
+  could complete this alone. Not a code task.
+- **Status**: BLOCKED on scheduling/access, not on anything technical.
+
+---
+
+## NOT_STARTED — deferred by explicit choice (re-evaluate before starting)
+
+### SOW-CP44: Socket routing across multiple Owner instances
+- **Priority**: Low for now
+- **Affected repository**: blend_ode_be (`sow_module/collab`)
+- **Description**: Only matters once more than one Owner instance is actually deployed behind a load
+  balancer. Deferred 2026-11-11 by explicit user/agent budget agreement, not a blocker.
+
+### SOW-CP46: Scale test harness
+### SOW-CP47: Scale measurements (10–100 simulated editors) and approved gates
+- **Priority**: Low for now (CP-47 is the single most compute/token-expensive item in the whole plan)
+- **Affected repository**: blend_ode_be (`sow_module/collab`)
+- **Description**: Deferred 2026-11-11 by explicit user/agent budget agreement — do this close to
+  actual production rollout, not speculatively.
+
+---
+
+## NOT_STARTED — next in the build plan (not yet begun)
+
+### SOW-CP49: LLM and generated content insert
+- **Priority**: Medium-High
+- **Affected repository**: both
+- **Dependencies**: **needs a product decision from the owner before starting** — should LLM
+  prompts/responses be stored in the audit log? (the build plan's own CP-49 text asks this explicitly)
+- **Relevant files**: `sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md` (CP-49 section)
+- **Description**: New `POST /sows/{sow_id}/collab/insert` endpoint, idempotency, audit recording,
+  routing the existing suggested-fix/continue-draft flows through it.
+
+### SOW-CP50: Streaming preview and smart paste
+### SOW-CP51: Existing (CKEditor) drafts open safely in Lexical
+### SOW-CP52: Regeneration, intake sync, reset to latest in a live room
+### SOW-CP53: Intake messages, fuzzing, Phase F close report
+- **Priority**: Medium (CP-51 specifically is correctness-on-real-data, worth prioritizing over 49/50)
+- **Affected repository**: both (mostly blend_ode_be for 51/52)
+- **Relevant files**: `sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md` (CP-50 to CP-53 sections)
+- **Description**: Not started — see the build plan for each checkpoint's own task list.
+
+### Phase G (CP-54–61): Mentions, comments, suggestions, guests
+- **Priority**: Medium; CP-54 is a decision gate needing the owner's answer before coding starts
+- **Description**: Not started. CP-59 (suggestions / track-changes-style editing) is the hardest
+  single feature left in the whole plan — budget it accordingly.
+
+### Phase H (CP-62–66): Versions, finalize lock, export parity, audit
+### Phase I (CP-67–71): Full hardening — test matrices, load tests, security, accessibility
+### Phase J (CP-72–74): Cutover tooling, rollback, CKEditor removal
+- **Description**: Not started. CP-68 (load tests) carries the same cost profile as CP-47 — defer
+  similarly until near rollout.
+
+---
+
+## NOT_STARTED — standing gaps and decisions
+
+### SOW-ROLE: Resolve decisions.md Q2 (who is sow_admin / finalize-capable)
+- **Priority**: Medium
+- **Affected repository**: blend_ode_be
+- **Dependencies**: a product decision from the project owner
+- **Relevant files**: `blend_ode_be/src/sow_module/collab_session.py` (`resolve_role`),
+  `sow_docs/tracking/decisions.md` (Q2)
+- **Description**: Code currently maps `FE_ADMIN` → `sow_admin`, everyone else who passes
+  `assert_deal_access` → `editor`. A documented stand-in, not a resolution.
+- **Acceptance criteria**: `decisions.md` Q2 has a recorded answer; `resolve_role` and its tests match.
+
+### SOW-FENCE: Independent fencing-token re-verification at checkpoint time
+- **Priority**: Low (documented, deliberate gap while the feature isn't live)
+- **Affected repository**: blend_ode_be
+- **Dependencies**: a second, narrowly-scoped Snowflake connection into `NEXDRAFT` from FastAPI
+- **Relevant files**: `src/sow_module/collab_internal.py` (`checkpoint`)
+- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #7.
+
+### SOW-RENEW-PRECISION: Per-document lease renewal result, not a batched count
+- **Priority**: High
+- **Affected repository**: blend_ode_be (`sow_module/collab`)
+- **Dependencies**: live Snowflake access to verify the query change safely
+- **Relevant files**: `data/snowflake-store.ts` (`renewLeases`), `owner/lease-manager.ts` (`renewAll`)
+- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #14. `renewAll()` can't tell "every held lease
+  was actually renewed" apart from "the call succeeded but renewed none" — it optimistically refreshes
+  both cases alike. CP-42's `onFenced` real-time backstop covers the worst consequence in practice;
+  the underlying imprecision remains.
+- **Acceptance criteria**: the store reports which specific `dealId`s were actually renewed;
+  `renewAll()` only refreshes those and `forget()`s the rest.
+
+### SOW-PERSIST-RACE: Fix PersistQueue's overlapping-flush data loss
+- **Priority**: High
+- **Affected repository**: blend_ode_be (`sow_module/collab`)
+- **Relevant files**: `owner/persist-queue.ts`
+- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #15. Pre-existing (CP-22), surfaced by CP-42's
+  review. No in-flight guard per document; a successful flush deletes the whole pending array, not
+  just the rows it sent — an update enqueued mid-flush is silently lost.
+- **Acceptance criteria**: in-flight guard per `dealId`; a flush removes only the rows it sent; a test
+  proving an edit enqueued mid-flush survives to the next tick.
+
+### SOW-FENCE-ATOMIC: Make the Snowflake fencing check atomic with the write
+- **Priority**: Medium-High
+- **Affected repository**: blend_ode_be (`sow_module/collab`)
+- **Dependencies**: live Snowflake access to verify safely
+- **Relevant files**: `data/snowflake-store.ts` (`appendUpdates`)
+- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #16. The fencing `SELECT` and the write
+  `MERGE` are two separate statements, not one transaction.
+
+### INFRA-SECRET-ROTATE, INFRA-ENV-EXAMPLE, INFRA-CI, INFRA-MIGRATIONS-CLARIFY, INFRA-DEPS-CLARIFY, INFRA-CRLF-HASH
+- **Description**: Unrelated to the SOW module specifically but relevant to anyone working in these
+  repos — see `KNOWN_ISSUES_AND_BLOCKERS.md` #1–6 and #13 for full detail on each. Not re-detailed
+  here to avoid a second copy that can drift.
 
 ---
 
@@ -163,87 +145,16 @@ BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
 
 ## COMPLETED
 
-### SOW-CP00-CP20: SOW collaboration module build-out through CP-20
-- **Priority**: —
+### SOW-CP00–CP43, CP-45, CP-48: SOW collaboration module build-out
 - **Affected repository**: both
-- **Description**: See `CHANGELOG.md` for the itemized history and `CURRENT_PROJECT_STATE.md` for
-  what's actually built. All 20 checkpoints' acceptance checks passed at the time each was
-  completed; CP-16/17's Snowflake migrations are written and tested but **not yet applied** — that
-  application step is a separate, explicitly-gated action, not part of "complete."
+- **Description**: All acceptance checks passed at the time each checkpoint was completed. See
+  `CHANGELOG.md` for the itemized commit history and `CURRENT_PROJECT_STATE.md` for what's actually
+  built and working today. Two carve-outs, not failures: the `SOW_COLLAB_*` Snowflake migrations
+  (011/012) are written and tested but **not yet applied** (a separate, explicitly-gated action); the
+  CP-39 two-user manual test has never been run (see `SOW-CP39-MANUAL` above).
+- **Explicitly deferred, not part of "complete"**: CP-44, CP-46, CP-47 (see the deferred section above).
 
-### DOCS-HANDOFF: Create this agent-handoff documentation system
-- **Priority**: —
+### DOCS-HANDOFF: Create and maintain this agent-handoff documentation system
 - **Affected repository**: root
-- **Description**: This task. See `SESSION_LOG.md` for the session that created it.
-
-## Update 2026-11-09
-- **SOW-CP21 to SOW-CP25: COMPLETED** (see CHANGELOG).
-- **NEW — DEMO-ACCESS:** get the demo user `FE_SOW_LEXICAL_EDITOR` (or `FE_ADMIN`) through the admin screens, or use a deal the user already owns. Status: BLOCKED on an admin.
-- **NEW — BACKEND-500-SYNC:** `/pricing_tool/hubspot_deals_sync_info` returns 500. Needs the backend traceback before a fix. Status: BLOCKED on logs.
-- **DONE — PRICING-START-DATE-CRASH:** fixed in 8853099.
-- **Next:** SOW-CP26 (toolbar).
-
-## Update 2026-11-11
-- **SOW-CP26 to SOW-CP39: COMPLETED** (see CHANGELOG 2026-11-09 to 2026-11-11). CP-39 freeze and
-  regression report written. The two-user manual run is **NOT done**.
-- **SOW-CP40 (presence, cursors, chunked sync): IN_PROGRESS.** Done: shared chunk framing; Owner and
-  browser send and receive chunks; 100-connection room cap; 5 MB sync tested at server level.
-  Remaining: awareness throttle, presence UI (avatars with overflow), two-client cursor test,
-  browser-level 5 MB test.
-- **NEW — OUTSIDE-CHANGE-RELOAD:** when the draft changes outside the editor, the Owner refuses to save
-  and shows a notice, but does not reload the room. Needs a design (room reset) before implementing.
-  Status: BLOCKED on a design decision.
-- **NEW — PUSH:** all three repos have local commits not pushed. Status: BLOCKED on user authorization.
-- **Next:** finish CP-40, then CP-41 (per the build plan).
-
-## Update 2026-11-11 (later)
-- **SOW-CP40: COMPLETED.** Awareness throttle, presence list/UI, two-client cursor proof (automated,
-  server-level), browser-level 5 MB test. `blend_ode` `dd18554`, `blend_ode_be` `b163eb4`.
-- **CP-39 two-user manual test: still NOT_STARTED**, explicitly deferred by the user this session
-  (needs live services + two real SSO accounts). Not blocked technically — blocked on scheduling/
-  access, same as before.
-- **NEW — INFRA-CRLF-HASH:** this checkout's `core.autocrlf=true` breaks the shared-drift/parity
-  hash tests in both repos (false failure, confirmed no real content difference). See
-  `KNOWN_ISSUES_AND_BLOCKERS.md` #13. Status: NOT_STARTED, needs owner sign-off on the fix (a
-  `.gitattributes` entry or a git config change), not something to silently patch mid-feature-work.
-- **Next, per the user's own budget-optimization decision this session:** CP-41 (reconnect, offline
-  editing, saving state), Sonnet 5.5 — see `prompt_log.md`'s CP-40 entry for the reasoning.
-
-## Update 2026-11-11 (CP-41)
-- **SOW-CP41: COMPLETED.** Reconnect with exponential backoff/jitter and a fresh session per attempt;
-  automated test proving an offline edit resends exactly once; "last saved" time in the status bar.
-  `blend_ode` commit: see `SESSION_LOG.md`. No backend/collab change this checkpoint.
-- **Next:** CP-42 (Snowflake-unreachable rule, graceful shutdown) — Sonnet 5.5 to implement, then a
-  short Opus review specifically on the single-writer/drain guarantee before marking it done.
-
-## Update 2026-11-11 (CP-42)
-- **SOW-CP42: COMPLETED**, including the planned Opus review and fixes for everything it found that
-  was safe to fix without live Snowflake access. `blend_ode_be` commit `b76201a`.
-- **NEW — SOW-RENEW-PRECISION, SOW-PERSIST-RACE, SOW-FENCE-ATOMIC: NOT_STARTED** (added above in this
-  update). All three need live-Snowflake verification before a safe fix — see
-  `KNOWN_ISSUES_AND_BLOCKERS.md` #14-16.
-- **Next:** per the user's own budget plan, this was the last of the three explicitly scoped
-  checkpoints for this run. Check in with the user before picking CP-43 or one of the deferred fixes.
-
-## Update 2026-11-11 (CP-43)
-- **SOW-CP43: COMPLETED.** `SnapshotScheduler` (threshold/idle-triggered snapshotting) and
-  `DataStore.pruneUpdates` (compaction, both store implementations). Found and fixed a real
-  pre-existing gap along the way: `SnapshotManager.takeSnapshot` (CP-23) had no caller anywhere in
-  production code before this checkpoint. `blend_ode_be` commit `7beb610`.
-- **User direction this session: Sonnet 5.5 only from here, no Opus**, for cost reasons — noted for
-  future sessions' model-choice planning, not just this one.
-- **Next:** not yet chosen by the user.
-
-## Update 2026-11-11 (CP-45)
-- **SOW-CP45: COMPLETED.** Periodic per-connection access re-check, the `/internal/access-changed`
-  hook FastAPI's `notify_access_changed` already called into nothing, and a revocation-poll backstop.
-  Frontend gained a clear message when a live session closes for lost access or finalize. Drive-by
-  fix: `CheckpointReason` was missing `'shutdown'` (CP-42 had been passing `'explicit'` instead).
-  `blend_ode_be` commit `98438f2`, `blend_ode` commit `e9ff19b`.
-- **Next:** not yet chosen by the user. CP-44 and CP-46/47 remain recommended to defer; CP-48 or
-  CP-51 are the next reasonable picks if continuing the build plan sequentially.
-
-## Update 2026-11-11 (CP-48)
-- **SOW-CP48: COMPLETED.** Mostly already built (CP-13/14/31/36); closed the two real gaps (text-format
-  fuzzing, hostile corpus through the full intake pipeline). `blend_ode` commit `dcd69eb`.
-- **Next:** CP-49 (LLM insert) or CP-51 (legacy drafts) if continuing the build plan.
+- **Description**: Created 2026-11-06, kept current every session since, rewritten (not just
+  appended) 2026-11-11 for this handoff. See `SESSION_LOG.md` for the full session history.

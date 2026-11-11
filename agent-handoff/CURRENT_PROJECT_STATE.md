@@ -1,169 +1,124 @@
 # Current Project State
 
-Last updated: 2026-11-06, by the session that created this handoff system. Keep this file current
-as development progresses — it should always reflect reality, not a plan.
+**Last updated: 2026-11-11, end of session — handing off to another developer.** This file was
+rewritten (not just appended to) at this point to consolidate ~10 stacked "Update" entries into one
+current picture. Full session-by-session history is preserved in `SESSION_LOG.md` and
+`sow_docs/tracking/prompt_log.md` (per-checkpoint detail) — nothing was lost, just de-duplicated here.
 
 ## Architecture status
 
-- **Pricing Tool and SOW Studio** (the pre-existing, CKEditor-era application): built and in
-  production use. Not modified by the work described below; this handoff system documents it but
-  did not change its behavior.
-- **SOW collaboration module** (Lexical + Yjs live-editing, replacing CKEditor for SOW authoring):
-  **in active development**, checkpoints CP-00 through CP-39 of its own build plan
-  (`sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md`) are complete; CP-40 is partly done.
-  The sections below are a snapshot from 2026-11-06 and are superseded by the 2026-11-11 update at the end.
+- **Pricing Tool and SOW Studio** (the pre-existing, CKEditor-era application): built, in production
+  use, unmodified by any of the work below.
+- **SOW collaboration module** (Lexical + Yjs live-editing, replacing CKEditor for SOW authoring): in
+  active development. **CP-00 through CP-43, CP-45, and CP-48 of the module's own build plan
+  (`sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md`) are complete.** CP-44, CP-46, CP-47 were
+  explicitly deferred (see "Deferred by choice" below, not blocked or failed). CP-49 onward (Phases
+  F tail, G, H, I, J) are not started.
+- The Lexical editor is reachable only behind a feature flag (`FE_SOW_LEXICAL_EDITOR`, or `FE_ADMIN`
+  with `REACT_APP_SOW_LEXICAL_EDITOR=true` at build time). With the flag off, the screen is
+  byte-for-byte unchanged from the CKEditor-era behavior.
 
-## Completed functionality (SOW collaboration module)
+## What's built and working (verified by automated tests, not yet by real users)
 
-- Shared TypeScript contracts (roles/capabilities, protocol, HTML allowlist, bridge types) —
-  `blend_ode/src/sow_module/shared/`, vendored into `blend_ode_be` with a drift check.
-- Backend HTML allowlist (`html_allowlist.py`) with parity tests against the TypeScript version.
-- Snowflake schema for the module's own tables (`SOW_COLLAB_DOCUMENT/UPDATE/SNAPSHOT/LEASE/
-  REVOCATION/IDEMPOTENCY/AUDIT`), written as `migrations/011` and `012` (grants) — **not yet
-  applied to Snowflake**; written and tested, awaiting explicit approval to run.
-- `SnowflakeDataStore`: the Node service's full data-access layer against those tables, live-tested
-  against real (temporary) Snowflake tables.
-- FastAPI session endpoint (`POST /sows/{sow_id}/collab/session`) — feature-flagged, mints a
-  30-second ticket.
-- FastAPI internal endpoints (`resolve-access`, `document-state`, `checkpoint`) — service-key
-  protected, reusing the existing `save_sow_draft`/`assert_deal_access` without modifying them.
-- A Python mirror of the role/capability table, parity-tested against the TypeScript source.
+- Shared TypeScript contracts (roles/capabilities, protocol, HTML allowlist, bridge types,
+  intake pipeline) in `blend_ode/src/sow_module/shared/`, vendored into `blend_ode_be` via
+  `sync_shared.sh`, parity-tested against the Python mirror.
+- Full editor: toolbar, formatting, lists (3 levels), tables (insert/merge/shading, no drag-resize),
+  paste/drop through the one intake pipeline, placeholders, find/replace, stable block IDs, page
+  chrome (watermark/banner/read-only view), action bar, a public editor API (`getHtml`/`setHtml`/
+  `insertContent`/`scrollToBlock`), and an add-in adapter.
+- Live collaboration: the Node "Document Owner" service (Express + `ws` + Yjs) hosts real WebSocket
+  rooms; single-writer leases with fencing; chunked sync for large documents; presence/cursor
+  awareness (throttled); automatic reconnect with backoff and a fresh session per attempt; offline
+  edits via `y-indexeddb` resend exactly once on reconnect.
+- Owner checkpoint: explicit Save and quiet-period saves go through the existing `save_sow_draft`;
+  an outside change to the draft is refused (not silently overwritten) and reported to clients.
+- **The Snowflake-unreachable rule and graceful shutdown (CP-42)**: a room this process loses its
+  lease on goes permanently read-only rather than risk a second writer; `SIGTERM`/`SIGINT` drains
+  (flush, checkpoint, release leases, evict clients) within a bounded time with a hard-exit backstop.
+- **Snapshot scheduling and log compaction (CP-43)**: a document snapshots after N durable updates or
+  an idle period, then the update log is pruned (with a safety tail) — this had been built at the
+  storage layer in CP-23 but never actually triggered until CP-43.
+- **Live access enforcement (CP-45)**: a connection re-checks its own access every 60s; an explicit
+  `POST /internal/access-changed` hook (which FastAPI's `notify_access_changed` was already calling,
+  into nothing, since CP-20) now closes/downgrades affected sockets within the same request; a
+  5-second revocation-poll backstop; a SOW becoming Finalized mid-session closes editors with 4410.
+- **The intake pipeline (CP-48)**: one allowlist, one intake module, used identically by paste and by
+  add-in/programmatic insertion; fuzz-tested (fast-check) across html/markdown/text; the Python
+  parity pytest (`test_sow_module_html_parity.py`) has passed since CP-13.
 
-## In-progress / not yet started (SOW collaboration module)
+## Deferred by choice, not blocked (re-evaluate before continuing the build plan)
 
-- The Node Express + `ws` server itself that actually hosts live WebSocket connections (CP-21+ in
-  the build plan) — not built.
-- Ticket verification on the Node side, and the WebSocket lifecycle described in
-  `sow_docs/tracking/contracts.md` section 5 (HELLO handshake, lease ownership check, Yjs sync
-  frames, awareness, reauth, checkpoint-on-last-client-leaves) — not built.
-- The browser-side Lexical editor component and its WebSocket client — not built; no route in
-  `blend_ode` renders a Lexical editor yet.
-- Guest/external access to the live-collaboration module (commenter role) — explicitly deferred to
-  CP-60 of the module's build plan; not started.
-- A two-browser live-editing proof (the module's own first real UI milestone, CP-25) — blocked on
-  the above.
-- Independent re-verification of the checkpoint fencing token against the live lease from FastAPI —
-  explicitly out of scope for now (see `KNOWN_ISSUES_AND_BLOCKERS.md` #7).
+- **CP-44** (socket routing across multiple Owner instances) — only matters once more than one
+  instance is actually deployed behind a load balancer; premature now.
+- **CP-46/CP-47** (scale test harness / measurements at 10–100 simulated editors) — CP-47 specifically
+  is the single most compute/token-expensive item in the entire build plan. Do this close to actual
+  production rollout, not now.
+- These were a deliberate, user-agreed budget decision this session, not a technical blocker.
 
-## Remaining tasks
+## Not yet started
 
-See `TASK_BOARD.md` for the itemized, status-tracked list.
+Everything from **CP-49 onward**: LLM/generated-content insert (CP-49, needs a product decision on
+whether to store LLM prompts/responses in the audit log before starting), streaming preview/smart
+paste (CP-50), legacy CKEditor drafts opening safely in Lexical (CP-51, was in progress when this
+session ended — see `TASK_BOARD.md`), regeneration/reset in a live room (CP-52), intake hardening
+close-out (CP-53), and all of Phases G (mentions/comments/suggestions/guests), H (versions/finalize/
+export), I (hardening/load/security/accessibility), and J (cutover tooling). See `TASK_BOARD.md` and
+the build plan itself for the full per-checkpoint detail — not duplicated here to avoid drift.
 
-## Recent changes (most recent first — see `CHANGELOG.md` for the full history)
+## Never verified with real users (important — don't assume this works just because tests pass)
 
-1. This `agent-handoff/` documentation system was created at the project root (2026-11-06).
-2. The SOW module's tracking/reference/narrative docs were moved from inside `blend_ode_be` (and a
-   standalone `documentation/` folder) into a new root-level `sow_docs/` folder, with pointers left
-   at each original location — **this move is currently staged but not committed** in
-   `blend_ode_be`; see `SESSION_LOG.md` for the exact uncommitted state and the open question about
-   whether to commit it as-is or move `sow_docs/tracking/` back inside `blend_ode_be` so it's
-   versioned with the code it documents.
-3. CP-20 (FastAPI internal endpoints) committed in `blend_ode_be` (`408b0f8`).
-4. CP-19 (FastAPI session endpoint, ticket, feature flag) committed (`dc0218b`).
-5. CP-18 (Node Snowflake data layer) committed (`427f479`) — found and fixed a real binary-bind bug
-   via a live integration test.
+- **The CP-39 two-user manual test has never been run.** It needs the backend and collab service
+  running together and two real SSO-authenticated accounts with `FE_SOW_LEXICAL_EDITOR`/`FE_ADMIN`
+  access to the same deal — a human-driven step no agent session so far could complete alone. The
+  script is in `sow_docs/tracking/phaseD_report.md`, with a results table ready to fill in.
+- Real two-browser cursor/presence behavior, real network reconnect behavior, and the live access
+  re-check/finalize-lock paths have only been tested with fakes (automated WebSocket clients and
+  mocked FastAPI responses), never a real browser against the real backend.
+
+## Known limitations and open gaps
+
+See `KNOWN_ISSUES_AND_BLOCKERS.md` for the full, itemized list (16 items as of this writing). The
+ones most relevant to anyone picking this module back up:
+- **#1**: real secrets are committed and tracked in `blend_ode/.env.development`/`.env.production` —
+  predates this module, unrelated, but still live and unresolved.
+- **#13**: this (and possibly other) Windows checkouts have `core.autocrlf=true`, which makes two
+  hash-exact-match parity tests and `sync_shared.sh --check` fail on pure line-ending noise, not real
+  drift (confirmed via `git diff --ignore-all-space`). Not fixed — needs the owner's sign-off on a
+  `.gitattributes` entry or a git config change, since it touches shared repo config.
+- **#14–16**: three correctness gaps found by a targeted review of CP-42 (imprecise per-document lease
+  renewal, a pre-existing `PersistQueue` overlapping-flush race from CP-22, a non-atomic Snowflake
+  fencing check). All three need live-Snowflake access to fix safely — not attempted without it.
+- **#7**: FastAPI's checkpoint endpoint does not independently re-verify the fencing token (mitigated
+  by CP-42's `onFenced` real-time backstop, but the underlying gap remains — see `SOW-FENCE` and
+  `SOW-FENCE-ATOMIC` in `TASK_BOARD.md`).
+- Open product decision, still unanswered: who exactly is `sow_admin` (finalize-capable)? Code
+  currently stands in with `FE_ADMIN`-only (see `SOW-ROLE` in `TASK_BOARD.md`, `decisions.md` Q2).
 
 ## Important implementation details worth knowing before continuing
 
 - The SOW module's Node service connects to Snowflake with **different credentials and a different
-  schema** than the main FastAPI app — do not assume one `.env` covers both.
-- `checkpoint()`'s HTML sanitization must always go through `sow_module.html_allowlist
-  .sanitize_draft_html`, never the pre-existing `sanitize_rich_text` — the latter strips
-  highlights/placeholders the editor needs to preserve.
-- The role-to-capability mapping is parity-tested across TypeScript and Python — if you change one
-  side, the drift test will fail until you change the other (or re-run `sync_shared.sh`).
+  schema** (`BLEND_INTERNAL_IT_APPS.NEXDRAFT`) than the main FastAPI app.
+- `checkpoint()`'s HTML sanitization always goes through `sow_module.html_allowlist
+  .sanitize_draft_html` / `shared/allowlist.ts`'s `sanitizeHtml` — never the pre-existing
+  `sanitize_rich_text` (that one strips highlights/placeholders the editor needs to preserve).
+- The role-to-capability mapping, the HTML allowlist, and the intake contract are all parity-tested
+  across TypeScript and Python — changing one side without the other (or without re-running
+  `sync_shared.sh`) fails the drift tests (modulo the autocrlf false-failure above).
 - Nothing in the SOW module writes to `SOWS`, `SOW_DRAFT_VERSIONS`, `HUBSPOT_DEALS`, or
   `SOW_NATIVE_*` except through the existing `save_sow_draft` call inside the `checkpoint` internal
-  endpoint — this is a hard rule, not a current-state observation.
+  endpoint — a hard rule, not a current-state observation.
+- Three `SOW_COLLAB_*` migrations (011, 012) are written and tested but **not yet applied** to
+  Snowflake — that's a separate, explicitly-gated action requiring the database owner's approval.
+- All three repos are on local commits not yet pushed to origin as of this handoff — see the latest
+  `SESSION_LOG.md` entry for the exact commit list per repo and push status.
 
-## Known limitations
+## Model/process notes for whoever continues this
 
-See `KNOWN_ISSUES_AND_BLOCKERS.md` for the full, itemized list — most notably the committed secrets
-in `blend_ode` (#1) and the lack of CI in either repo (#2), both of which predate and are unrelated
-to the SOW module work but are relevant to anyone continuing development here.
-
-## Update 2026-11-09
-- **CP-21 to CP-25 are complete.** The collab service shell, rooms, snapshots, WebSocket protocol, and the frontend editor shell are committed.
-- **The live editor is not reachable for a demo yet.** It needs the backend, the collab service, and a user with `FE_SOW_LEXICAL_EDITOR` (or `FE_ADMIN`) and access to the deal.
-- **A local sandbox page exists** (`/sow-sandbox`, temporary, uncommitted) with formatting, lists, and A4 print.
-- **Open:** backend 500 on `/pricing_tool/hubspot_deals_sync_info`; the CORS message is a side effect of that 500.
-- **Next:** CP-26 (toolbar in the live editor).
-
-## Update 2026-11-11
-- **CP-26 to CP-39 complete.** Editor: toolbar, formatting, lists, tables, paste intake, placeholders,
-  find and replace, stable block IDs, A4 page, action bar, editor API, add-in adapter, print.
-- **Owner checkpoint works** (behind the feature flag): explicit Save and quiet-period saves go to the
-  existing FastAPI checkpoint endpoint. Outside changes to the draft are refused and reported to clients.
-- **Browser editor is reachable only with the feature flag** (`FE_SOW_LEXICAL_EDITOR`, or `FE_ADMIN` with
-  `REACT_APP_SOW_LEXICAL_EDITOR=true`). With the flag off, the screen is unchanged.
-- **CP-40 partly done:** chunked sync (both sides) and a 100-connection room cap are built and tested
-  at unit and server level. Awareness throttle, presence UI and the two-client cursor test are not built.
-- **Not verified in a running system:** the two-user manual test (CP-39 script), real two-browser cursors,
-  and anything needing the backend and collab service running together.
-- **Not pushed:** local commits in all three repos. See TASK_BOARD `PUSH`.
-
-## Update 2026-11-11 (later)
-- **CP-40 is now complete.** Awareness throttle (200ms), presence list and avatar UI, an automated
-  two-client awareness/cursor relay proof (server-level, no real browsers needed), and a
-  browser-level 5 MB chunked-sync test (the earlier one was server-only). `blend_ode` `dd18554`,
-  `blend_ode_be` `b163eb4`. Not pushed yet.
-- **CP-39's two-user manual test is still not done** — the user explicitly deferred it this session
-  (it needs live services and two real SSO-authenticated accounts, neither of which this session can
-  provide alone).
-- **New environment finding, not a regression:** this checkout has `core.autocrlf=true`, which makes
-  two hash-exact-match tests (one per repo) and `sync_shared.sh --check` fail on pure line-ending
-  noise, not real content drift (verified with `git diff --ignore-all-space`). See
-  `KNOWN_ISSUES_AND_BLOCKERS.md` #13.
-- **Next:** CP-41 (reconnect, offline editing, saving state).
-
-## Update 2026-11-11 (CP-41)
-- **CP-41 is now complete.** The browser provider reconnects after an unexpected close with
-  exponential backoff + full jitter, fetching a brand-new session (fresh ticket, possibly a new
-  wsUrl) on every attempt. Offline edits already persisted via `y-indexeddb`; this checkpoint added
-  the automatic reconnect and proved, with a test, that offline edits resend exactly once as a single
-  full-state frame. Status bar now also shows the last checkpoint time. `blend_ode` only — no
-  backend/collab file was touched. Not pushed yet.
-- **Next:** CP-42 (Snowflake-unreachable rule and graceful shutdown) — plan to implement on Sonnet
-  5.5, then a short Opus review of the "never two writers"/drain guarantee specifically before
-  calling it done.
-
-## Update 2026-11-11 (CP-42)
-- **CP-42 is now complete, including its planned Opus review.** An `OutageGuard` renews held leases
-  on a timer and permanently flips a room read-only the moment its own lease validity actually
-  lapses; new rooms are refused while Snowflake is unreachable; a graceful `shutdown()` drains,
-  checkpoints, releases leases and evicts clients within a bounded time. The review (run as planned,
-  not skipped) found real gaps beyond the original scope — an un-gated checkpoint path, several
-  unhandled-rejection crash risks, a narrow edit/lease-leak window during shutdown, and a pre-existing
-  connection-count leak — all fixed this session. Three deeper, pre-existing or Snowflake-query-level
-  gaps need live-Snowflake access to fix safely and are documented instead
-  (`KNOWN_ISSUES_AND_BLOCKERS.md` #14-16). `blend_ode_be` only, commit `b76201a`. Not pushed yet.
-- **Next:** per the user's own budget plan, this was the last of the three checkpoints explicitly
-  scoped for this run. Awaiting direction on CP-43 vs. the deferred fixes vs. something else.
-
-## Update 2026-11-11 (CP-43)
-- **CP-43 is now complete.** `SnapshotScheduler` triggers a snapshot after a configurable number of
-  durable updates or an idle period; compaction then prunes the update log at or below that
-  snapshot's seq, keeping a configurable safety tail, via a new `DataStore.pruneUpdates` implemented
-  for both stores. Along the way, found that `SnapshotManager.takeSnapshot` (built in CP-23) had
-  never actually been called from production code — this checkpoint is what wires it up for real.
-  `blend_ode_be` only, commit `7beb610`. Not pushed yet.
-- **Model note:** the user set Sonnet 5.5 as the only model for this and future sessions, explicitly
-  ruling out Opus for cost reasons (including for review passes — a careful self-review substitutes).
-- **Next:** not yet chosen by the user.
-
-## Update 2026-11-11 (CP-45)
-- **CP-45 is now complete.** Access and status changes now take effect on an already-live WebSocket:
-  a periodic per-connection re-check (default 60s), an explicit `/internal/access-changed` hook that
-  FastAPI's existing `notify_access_changed` now actually reaches, and a 5-second revocation-poll
-  backstop. The finalize lock (close 4410 when a SOW becomes Finalized mid-session) and a demoted
-  user's edits being rejected both reuse existing logic rather than adding new paths. Frontend shows
-  a clear message when a session closes this way, instead of a bare "Offline" status.
-  `blend_ode_be` commit `98438f2`, `blend_ode` commit `e9ff19b`. Not pushed yet.
-- **Next:** not yet chosen by the user. CP-44 and CP-46/47 remain recommended to defer.
-
-## Update 2026-11-11 (CP-48)
-- **CP-48 is now complete.** Verified most of it (intake.ts, paste.ts/editorApi.ts sharing one
-  pipeline, the Python parity pytest) was already built in earlier checkpoints; added the two real
-  gaps found — a text-format fast-check fuzz test and the hostile fixture corpus run through the
-  full `intake()` pipeline, not just `sanitizeHtml`. `blend_ode` only, commit `dcd69eb`. Not pushed.
-- **Next:** not yet chosen by the user.
+- The user explicitly set **Sonnet 5.5 as the only model** for this module's work going forward — no
+  Opus (cost reasons), no Haiku for actual code (this module is concurrency/security/data-integrity
+  sensitive; a Haiku mistake here tends to be a silent, expensive-to-find bug). A careful self-review
+  of the diff substitutes for a second-model review pass.
+- Keep per-checkpoint tracker entries short (one tight paragraph), run targeted tests rather than the
+  full `run_checks.sh` after every small change, and skip the production build check unless frontend
+  bundling is actually touched — full verification still happens before any push.
