@@ -224,3 +224,12 @@ BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
   `KNOWN_ISSUES_AND_BLOCKERS.md` #14-16.
 - **Next:** per the user's own budget plan, this was the last of the three explicitly scoped
   checkpoints for this run. Check in with the user before picking CP-43 or one of the deferred fixes.
+
+## Update 2026-11-11 (CP-43)
+- **SOW-CP43: COMPLETED.** `SnapshotScheduler` (threshold/idle-triggered snapshotting) and
+  `DataStore.pruneUpdates` (compaction, both store implementations). Found and fixed a real
+  pre-existing gap along the way: `SnapshotManager.takeSnapshot` (CP-23) had no caller anywhere in
+  production code before this checkpoint. `blend_ode_be` commit `7beb610`.
+- **User direction this session: Sonnet 5.5 only from here, no Opus**, for cost reasons — noted for
+  future sessions' model-choice planning, not just this one.
+- **Next:** not yet chosen by the user.

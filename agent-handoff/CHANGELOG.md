@@ -183,3 +183,17 @@ shutdown).
 This was the last of the three checkpoints explicitly scoped for this session's budget plan
 (CP-40/41 on Sonnet, CP-42 Sonnet + a short Opus review). Next checkpoint and model: to be decided
 with the user.
+
+---
+
+## 2026-11-11 (even latest) — CP-43 completed (Sonnet only, per user direction)
+
+### blend_ode_be (backend, the collab Node service)
+- `feat(sow_module)` `SnapshotScheduler` (snapshot after N durable updates or an idle period,
+  whichever first) and `DataStore.pruneUpdates` (compaction with a configurable safety tail,
+  implemented for both `InMemoryDataStore` and `SnowflakeDataStore`, plus a shared contract test).
+  Found and fixed a real pre-existing gap: `SnapshotManager.takeSnapshot` (CP-23) was never actually
+  called from production code before this checkpoint built the trigger for it. (`7beb610`)
+
+The user set Sonnet 5.5 as the only model going forward (no Opus, for cost reasons) — this
+checkpoint and its own review were done entirely on Sonnet.

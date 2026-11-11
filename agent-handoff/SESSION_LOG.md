@@ -8,6 +8,89 @@ forward, every meaningful session should add a real-time entry using
 
 ---
 
+## Session: 2026-11-11 (even latest) — CP-43 (snapshot scheduling and compaction), Sonnet only
+
+- **Agent/tool**: Claude Code, Sonnet 5 — user explicitly set the model and asked to stop using Opus
+  for cost reasons going forward; this session uses Sonnet for everything, including its own review.
+- **Objective**: Implement CP-43, continuing directly from CP-42 earlier in this same conversation.
+- **Repositories involved**: blend_ode_be only (`sow_module/collab`). No frontend file touched.
+
+### Starting state
+| Repo | Branch | Starting commit |
+|---|---|---|
+| blend_ode_be | dinesh_thamill_blend360india_sow_editor | `b76201a` |
+
+### Files inspected
+`owner/snapshot-manager.ts` (and its test — found `takeSnapshot` is never called anywhere outside
+tests, a real gap this checkpoint fills), `data/store.ts`, `data/snowflake-store.ts`,
+`data/memory-store.ts`, `data/contract-tests.ts` (the shared InMemoryDataStore/SnowflakeDataStore
+test suite pattern), `owner/connection.ts`, `owner/persist-queue.ts`, `migrations/011_...sql` (to
+confirm `CREATED_ON` already exists on `SOW_COLLAB_UPDATE` — no migration needed).
+
+### Files created / modified
+| Repo | Path | Change |
+|---|---|---|
+| blend_ode_be | `sow_module/collab/src/owner/snapshot-scheduler.ts` | new — `SnapshotScheduler` |
+| blend_ode_be | `sow_module/collab/src/data/store.ts` | `DataStore.pruneUpdates` |
+| blend_ode_be | `sow_module/collab/src/data/memory-store.ts`, `snowflake-store.ts` | `pruneUpdates` impls |
+| blend_ode_be | `sow_module/collab/src/data/contract-tests.ts` | shared pruneUpdates contract test |
+| blend_ode_be | `sow_module/collab/src/owner/connection.ts` | wires `noteOpened`/`forget` |
+| blend_ode_be | `sow_module/collab/src/server.ts` | constructs/wires `SnapshotScheduler`; config |
+| blend_ode_be | `sow_module/collab/src/config.ts`, `.env.example` | 3 new env vars |
+| blend_ode_be | new `owner/snapshot-scheduler.test.ts` + updates to 3 existing test files for the config literal | 6 new tests |
+
+### Implementation summary
+See `prompt_log.md`'s CP-43 entry for full detail. One real pre-existing gap found and fixed along
+the way: `SnapshotManager.takeSnapshot` (built in CP-23) had no caller anywhere in production code —
+snapshots were simply never taken before this checkpoint. `SnapshotScheduler` is the missing trigger,
+hooked into `PersistQueue`'s existing `onDurable` callback.
+
+A test-design note worth keeping for later sessions: `SnowflakeDataStore.appendUpdates` does not let
+a caller set `createdAt` directly (the column defaults to `CURRENT_TIMESTAMP()` server-side), so the
+shared contract test for `pruneUpdates` drives "age" via a huge vs. zero `safetyTailMs` relative to
+real wall-clock time, not a forged timestamp — the first version of the test forged `createdAt` and
+would have silently never actually tested pruning against real Snowflake.
+
+### Commands executed
+```
+npx tsc --noEmit                                  # clean
+npm run --silent lint                             # clean
+bash scripts/check-module-boundary.sh             # module boundary OK
+npx vitest run                                    # 93 passed, 7 skipped (was 87/6 before this checkpoint)
+PYTHON=./venv/Scripts/python.exe bash sow_module/run_checks.sh   # only the known pre-existing CRLF FAILs
+```
+
+### Tests performed and actual results
+- Collab Vitest: **93 passed, 7 skipped** (6 new: 5 `SnapshotScheduler` tests including the literal
+  "reconstructs identically after compaction" acceptance check, +1 shared `pruneUpdates` contract
+  test run against `InMemoryDataStore`; its `SnowflakeDataStore` counterpart is skipped by default
+  like the rest of that integration file). Lint and module-boundary checks clean.
+- Backend `sow_module` pytest subset: 115 passed, 1 failed — same pre-existing CRLF/hash-drift
+  failure as every session this week; no Python file touched this checkpoint.
+- `npx tsc --noEmit`: clean. No frontend changes, so the frontend suite was not re-run.
+
+### Commits
+| Repo | Commit hash | Message |
+|---|---|---|
+| blend_ode_be | `7beb610` | feat(sow_module): CP-43 snapshot scheduling and update-log compaction |
+
+### Push status
+**Not pushed** — awaiting explicit authorization, per standing instruction.
+
+### Unresolved issues
+- Same carried-over items as prior sessions: the three CP-42-review-deferred gaps
+  (`KNOWN_ISSUES_AND_BLOCKERS.md` #14-16, needing live-Snowflake verification), the `core.autocrlf`
+  hash-drift issue, and CP-39's still-unrun two-user manual test. Nothing new this checkpoint.
+
+### Recommended next actions
+1. The user has not yet chosen the next checkpoint after CP-43. Per the earlier model-cost
+   discussion, everything from here runs on Sonnet 5.5 only — no second-model review pass; a careful
+   self-review of the diff substitutes for it.
+2. If picking up one of the CP-42-deferred fixes instead of continuing the build plan sequentially:
+   `SOW-RENEW-PRECISION` and `SOW-FENCE-ATOMIC` both need live Snowflake access to change safely.
+
+---
+
 ## Session: 2026-11-11 (latest) — CP-42 (Snowflake-unreachable rule, graceful shutdown) + Opus review
 
 - **Agent/tool**: Claude Code, Sonnet 5 for implementation; one Opus (`opus`, effort `high`) subagent

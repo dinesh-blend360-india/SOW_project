@@ -139,3 +139,14 @@ to the SOW module work but are relevant to anyone continuing development here.
   (`KNOWN_ISSUES_AND_BLOCKERS.md` #14-16). `blend_ode_be` only, commit `b76201a`. Not pushed yet.
 - **Next:** per the user's own budget plan, this was the last of the three checkpoints explicitly
   scoped for this run. Awaiting direction on CP-43 vs. the deferred fixes vs. something else.
+
+## Update 2026-11-11 (CP-43)
+- **CP-43 is now complete.** `SnapshotScheduler` triggers a snapshot after a configurable number of
+  durable updates or an idle period; compaction then prunes the update log at or below that
+  snapshot's seq, keeping a configurable safety tail, via a new `DataStore.pruneUpdates` implemented
+  for both stores. Along the way, found that `SnapshotManager.takeSnapshot` (built in CP-23) had
+  never actually been called from production code — this checkpoint is what wires it up for real.
+  `blend_ode_be` only, commit `7beb610`. Not pushed yet.
+- **Model note:** the user set Sonnet 5.5 as the only model for this and future sessions, explicitly
+  ruling out Opus for cost reasons (including for review passes — a careful self-review substitutes).
+- **Next:** not yet chosen by the user.

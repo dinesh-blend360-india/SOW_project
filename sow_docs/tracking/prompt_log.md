@@ -728,3 +728,52 @@ Handoff to next prompt: per the user's own budget plan, CP-42 is the last of the
 explicitly scoped for this run (CP-40/41 Sonnet, CP-42 Sonnet+Opus review). Recommend pausing here for
 the user to decide the next slice (CP-43 compaction, or the deferred SOW-RENEW-PRECISION/SOW-PERSIST-RACE/
 SOW-FENCE-ATOMIC fixes, or something else) rather than assuming continuation.
+
+## CP-43: compaction and pruning — completed (2026-11-11)
+Summary: CP-23 (2026-11-06) built `SnapshotManager.takeSnapshot`/`reopen` but nothing in production
+code ever called `takeSnapshot` — this checkpoint builds the actual trigger. New `SnapshotScheduler`
+hooks into `PersistQueue`'s existing `onDurable` callback: snapshots a document after
+`snapshotUpdateThreshold` durable updates since its last snapshot (default 500), or after
+`snapshotIdleMs` with no further update (default 5 min), whichever comes first. After a snapshot
+succeeds, compaction prunes the update log at or below that snapshot's `upToSeq` via a new
+`DataStore.pruneUpdates`, keeping anything newer than `snapshotSafetyTailMs` regardless of seq
+(default 24h) — implemented identically for `InMemoryDataStore` and `SnowflakeDataStore` (one
+batched `DELETE`, bind variables only), with a shared `DataStore` contract test so the two can't
+silently drift apart, matching the existing `contract-tests.ts` pattern.
+Decisions/assumptions: the literal task text says "after N updates or after idle time" — read as "N
+updates since the last snapshot was taken," not "N updates total," since the latter would snapshot
+once and then either never again or constantly depending on how the comparison is framed.
+`noteOpened(dealId, upToSeq)` seeds the scheduler's baseline on open/reopen (wired in
+`connection.ts`, reusing the `upToSeq` already computed by the existing `snapshots.reopen()` call) —
+without it, a freshly-restarted process would treat every already-snapshotted document as needing an
+immediate re-snapshot. `forget(dealId)` (wired on room close) drops tracking so memory doesn't grow
+across the process's lifetime for documents that are no longer open. Snapshotting and pruning are
+fire-and-forget from `onDurable` (logged on failure, never thrown back into the persist queue's own
+error path) and guarded against overlapping runs for the same document. Chose not to add a database
+migration — the `UPDATE` table's existing `CREATED_ON` column (migration 011) is all `pruneUpdates`
+needs; no schema change.
+Registry (new or changed):
+- file: sow_module/collab/src/owner/snapshot-scheduler.ts: `SnapshotScheduler`
+  (`onDurable`/`noteOpened`/`forget`/`stop`)
+- file: sow_module/collab/src/data/store.ts: `DataStore.pruneUpdates`
+- file: sow_module/collab/src/data/memory-store.ts, snowflake-store.ts: `pruneUpdates` implementations
+- file: sow_module/collab/src/data/contract-tests.ts: shared pruneUpdates contract test (both stores)
+- file: sow_module/collab/src/owner/connection.ts: wires `noteOpened`/`forget` into the connection
+  lifecycle; `snapshotScheduler` added to `ConnectionDeps`
+- file: sow_module/collab/src/server.ts: constructs `SnapshotScheduler`, wires it into
+  `PersistQueue`'s `onDurable`, stops it in both `close()` and `drain()`
+- config: `COLLAB_SNAPSHOT_UPDATE_THRESHOLD` (500), `COLLAB_SNAPSHOT_IDLE_MS` (300000),
+  `COLLAB_SNAPSHOT_SAFETY_TAIL_MS` (86400000)
+Verified (this session):
+- `npx tsc --noEmit`: clean. `npm run --silent lint` / `check-module-boundary.sh`: clean.
+- Collab Vitest: **93 passed, 7 skipped** (was 87 passed/6 skipped before this checkpoint; +6 new: 5
+  `SnapshotScheduler` unit tests including the literal "reconstructs identically after compaction"
+  acceptance check, +1 shared `pruneUpdates` contract test now run against both stores — the
+  Snowflake-integration copy of it is one of the newly-skipped-by-default ones, gated behind
+  `RUN_SNOWFLAKE_INTEGRATION=1` like the rest of that file).
+- Backend `sow_module` pytest subset: 115 passed, 1 failed — the same pre-existing CRLF/hash-drift
+  failure as every prior session; no Python file touched this checkpoint.
+- No frontend file touched this checkpoint.
+Open questions for the user: none new.
+Handoff to next prompt: per the user's own direction, continuing on Sonnet 5.5 only (no Opus) for
+cost reasons. Next checkpoint not yet chosen by the user as of this entry.
