@@ -203,7 +203,12 @@ deliberately.
 - **Possible resolution**: implement the per-document renewal result described above; add a
   client-side timeout to the Snowflake connection/pool itself, not just to the renewal sweep.
 
-## 15. `PersistQueue.flush()` has a pre-existing overlapping-flush race (High for durability)
+## 15. RESOLVED 2026-11-12 — `PersistQueue.flush()` overlapping-flush race (was High for durability)
+
+Fixed: one flush per document in flight at a time, and only the updates actually sent are removed
+after a successful write. Regression tests in `sow_module/collab/src/owner/persist-queue.test.ts`
+fail on the old code and pass on the fix. Original description kept below for history.
+
 
 - **Repository**: `blend_ode_be` (`sow_module/collab`)
 - **Impact**: High for durability, not for the single-writer guarantee specifically. Found during
