@@ -1,0 +1,35 @@
+CHECK MUST — questions and answers (2026-11-11)
+
+1. HOW DOES CKEDITOR GET ITS DATA, AND IS THAT IN OUR PLAN?
+
+- Load: the draft HTML from the backend is passed to CKEditor as its `data` prop
+  (blend_ode/src/pricing-tool/components/DraftEditor.tsx, around line 661).
+- Edit: CKEditor's change event calls editor.getData(), which goes to handleEditorChange and then
+  onContentChange. DraftEditorScreen.tsx keeps that HTML in draftContent.
+- Save: the Save button and a 15-second autosave send the HTML to the backend through saveDraft,
+  which writes a new version through save_sow_draft.
+- Yes, it is in the plan. The HTML stays the system of record (ADR-001 and ADR-002). CP-37 and CP-38
+  replace the CKEditor-to-save path with the Lexical editor's export and the Owner's checkpoint. The
+  Owner calls the same save_sow_draft, so version history stays the same.
+
+2. ARE WE PROVIDING ALL THE FEATURES THE PREVIOUS EDITOR HAD?
+
+No. From the parity table in sow_docs/tracking/audit_frontend.md (41 rows), most are built. Not built:
+- Table properties and cell properties (rows 22-23): only cell shading and vertical alignment exist.
+  No border, padding or dimension dialogs.
+- Column resize by drag (row 24): width presets only.
+- Arbitrary pasted font families (row 39): still an open decision.
+- Comments (row 41): the live editor does not show or create comments. Comments are kept on the
+  server, not shown. "Comment on selection" exists only in the temporary sandbox.
+- Open-item highlighting in the screen: DraftEditorScreen.tsx finds the editor through CKEditor's
+  .ck-editor__editable DOM class, so that highlighting will not work in the Lexical editor. Not tested yet.
+- Not verified in use: the live editor has never been run with two real users; checkpoint and screen
+  integration have only been tested with fakes.
+
+3. "ADD A SESSION, AND ALL INTO DOCUMENT BY THE OPTION THERE IN PLACE DRAFT PART" — UNCLEAR
+
+Open question (not answered yet). Possible meanings:
+(a) add a new editing session to a draft from the existing draft screen (for example "new version" or
+    "continue draft");
+(b) move the whole draft content into the Lexical editor from the draft part of the screen;
+(c) something else.
