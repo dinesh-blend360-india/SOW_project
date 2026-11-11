@@ -533,3 +533,71 @@ Registry (new or changed):
 - file: sow_docs/tracking/phaseD_report.md: regression results and manual test script
 Open questions for the user: run the two-user script and record results in phaseD_report.md.
 Handoff to next prompt: CP-40 presence and chunked sync.
+
+## CP-40: presence, cursors and chunked initial sync — completed (2026-11-11)
+Summary: Finished the items left open from the earlier CP-40 (partial) chunked-sync work: an
+outbound awareness throttle on the browser provider, a presence list derived from Yjs awareness
+state, presence avatars in the page chrome, an automated two-client cursor/presence proof, and a
+browser-level 5 MB sync test (the existing 5 MB test was server-only). The CP-39 two-user manual
+test was explicitly deferred by the user this session (needs live services and two real SSO
+accounts, which this session cannot provide) and remains an open item, not closed by this entry.
+Decisions/assumptions: Presence relies on `@lexical/yjs`'s own `initLocalState`/`syncCursorPositions`
+(confirmed from the installed package source, `@lexical/yjs` 0.44.0) setting flat `name`/`color`
+fields on each client's local awareness state; the provider just reads them back via
+`awareness.getStates()`, excluding the local client id, and omits any entry with no name yet (not
+seen as a bug — a connection that hasn't been through Lexical's cursor sync simply isn't in the list
+yet). Throttle is a 200ms trailing-edge window on the browser provider only — the Owner still relays
+whatever arrives, unthrottled, since the constraint ("awareness is throttled") is about not flooding
+the socket from the sender, not a server-side rate limit. Presence UI avoids antd's `Avatar.Group`
+`max` prop (and, it turned out, `Avatar.Group` itself) because both depend on antd's responsive
+`useBreakpoint`/`window.matchMedia`, unavailable in this project's jsdom test setup; added a
+`matchMedia` shim to the existing `jestGlobals.ts` test-only shim file (already shims crypto/
+structuredClone for the same kind of jsdom gap) rather than avoiding the component.
+Registry (new or changed):
+- file: blend_ode/src/sow_module/editor/SowCollabProvider.ts: `PresenceUser`, `presence` getter,
+  `queueAwarenessBroadcast`/`flushAwareness` (200ms trailing throttle), `collectPresence`/`emitPresence`
+- file: blend_ode/src/sow_module/editor/DraftChrome.tsx: `PresenceStack` (antd avatars + manual overflow
+  slice, no `Avatar.Group` `max` prop)
+- file: blend_ode/src/sow_module/editor/LexicalDraftEditor.tsx: wires `provider.on('presence', ...)` into
+  state and renders `PresenceStack` in the status row
+- file: blend_ode/src/sow_module/editor/jestGlobals.ts: added a `matchMedia` shim
+- file: blend_ode/src/sow_module/editor/__tests__/SowCollabProvider.test.ts: throttle test, presence
+  tests (remote state applied, no-name-yet omitted), browser-level 5 MB chunked-sync test
+- file: blend_ode/src/sow_module/editor/__tests__/DraftChrome.test.tsx: new, `PresenceStack` rendering
+  and overflow tests
+- file: blend_ode_be/sow_module/collab/src/server.test.ts: two-real-client awareness relay test (server
+  forwards an encoded y-protocols awareness update byte-for-byte; the receiving client decodes it back
+  to the same name/color)
+Verified (this session, after a fresh `npm install` in both `blend_ode` and `sow_module/collab` —
+neither had `node_modules` at session start):
+- `npx tsc --noEmit` clean in both `blend_ode` and `sow_module/collab`.
+- ESLint clean on `blend_ode/src/sow_module/editor` and `sow_module/collab/src` (one pre-existing,
+  unrelated warning in `LexicalDraftEditor.test.tsx`, a file not touched this session).
+- Frontend `sow_module` Jest: 180 passed, 2 failed — both failures are the pre-existing CRLF/hash
+  drift (`sharedDrift.test.ts`, `roles.test.ts`; see below), confirmed unrelated to this session's
+  changes (`git diff --ignore-all-space` shows zero real content difference on the affected fixture
+  files). A third failure (`SowLexicalHarness.test.tsx`, a 5s Jest timeout on a lazy import) appeared
+  in one run and not in a repeat run — a pre-existing flake, not reproduced by anything changed here.
+- Collab Vitest: 77 passed, 6 skipped (was 76 passed before this session; +1 is the new awareness
+  relay test). `npm run --silent lint`/`typecheck` clean. `check-module-boundary.sh` OK.
+- Backend `sow_module` pytest subset (the 8 files `run_checks.sh` runs): 115 passed, 1 failed — the
+  failure is `test_sow_module_shared_drift.py`'s hash check, the same CRLF-driven family as the two
+  frontend failures above (no Python file was touched this session).
+- `bash sow_module/run_checks.sh` summary: shared-copies-in-sync and backend module tests show
+  FAIL, both solely for the CRLF/hash reason above; everything else (frontend typecheck, collab
+  typecheck/lint/boundary/tests) PASS.
+- Production build (`CI=false npm run build`): succeeds.
+**New, pre-existing-but-newly-documented finding**: this Windows checkout has `core.autocrlf=true`,
+which silently rewrites every text file it touches from the repo's committed LF to CRLF on checkout,
+and at least two hash-exact-match tests (one per repo) and `sync_shared.sh --check` compare against
+a hash computed from the LF originals. This is an environment configuration issue, not drift in the
+tracked content (`git diff --ignore-all-space` confirms zero real differences) — see
+`KNOWN_ISSUES_AND_BLOCKERS.md` for the recorded item and a suggested resolution. Not fixed this
+session: fixing it (a `.gitattributes` entry, or `core.autocrlf=false` for these repos) is outside
+CP-40's scope and risks unrelated side effects, so it is flagged rather than silently patched.
+Open questions for the user: none new for CP-40 itself. Still open from CP-39: run the two-user
+manual script and record results in `phaseD_report.md` (explicitly deferred this session per the
+user's own choice, not forgotten).
+Handoff to next prompt: CP-40 is complete. Recommended next checkpoint, per this session's own
+budget-optimization discussion with the user: CP-41 (reconnect, offline editing, saving state) on
+Sonnet 5.5, same as CP-40 — mechanical, well-specified plumbing against an already-built protocol.

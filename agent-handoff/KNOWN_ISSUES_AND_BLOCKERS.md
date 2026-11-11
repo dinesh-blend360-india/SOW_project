@@ -151,6 +151,23 @@ deliberately.
 - **OPEN:** live editor returns 403 for users without `FE_SOW_LEXICAL_EDITOR`/`FE_ADMIN` or deal access. This is an access rule, not a bug.
 - **OPEN:** `blend_ode/src/App.tsx` was truncated once outside this session. Recovered from git. Check that no one else edits it.
 
+## 13. This Windows checkout's `core.autocrlf=true` breaks hash-exact-match tests in both repos
+
+- **Repository**: both (`blend_ode`'s `sharedDrift.test.ts`/`roles.test.ts`, `blend_ode_be`'s
+  `test_sow_module_shared_drift.py`, and `sow_module/run_checks.sh`'s `sync_shared.sh --check` step)
+- **Impact**: Low-medium — it's a false failure, not real drift, but it will keep failing on any
+  machine with this git config until fixed, and could be mistaken for a real regression.
+- **Found**: 2026-11-11, while establishing a test baseline before CP-40 work. `git config --get
+  core.autocrlf` returns `true` on this checkout. Several `sow_module/shared` fixture files and the
+  vendored `collab/src/shared` copy show as locally modified purely from LF→CRLF normalization —
+  confirmed with `git diff --ignore-all-space`, which shows zero real content difference. The
+  drift/parity tests compute a SHA-256 hash of file contents, which differs between LF and CRLF, so
+  they fail even though the actual tracked content is unchanged.
+- **Possible resolution**: add a `.gitattributes` entry forcing LF for `sow_module/shared/**` (and
+  the vendored collab copy), or set `core.autocrlf=false`/`input` for these repos. Not done this
+  session — it's outside CP-40's scope and changes shared config, so it needs the project owner's
+  sign-off rather than a silent fix alongside unrelated work.
+
 ## Update 2026-11-11
 - **OPEN:** a change to the draft made outside the editor is refused by the Owner and shown as a notice;
   the room is not reloaded. Users must reload the page. Needs a design before the Owner can reset a room.

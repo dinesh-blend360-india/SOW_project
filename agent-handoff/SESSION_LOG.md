@@ -8,6 +8,101 @@ forward, every meaningful session should add a real-time entry using
 
 ---
 
+## Session: 2026-11-11 (later) — Complete CP-40 (presence, throttle, 5MB browser test)
+
+- **Agent/tool**: Claude Code, Sonnet 5
+- **Objective**: Finish CP-40's remaining items (awareness throttle, presence UI, two-client
+  cursor/presence proof, browser-level 5 MB test) after the user reviewed the Phase E–J roadmap and
+  chose a budget-optimized order (Sonnet for CP-40/41, a short Opus review reserved for CP-42). The
+  user also asked to re-check CP-39's status; its two-user manual test was explicitly deferred this
+  session (needs live services and two real SSO accounts, which this session cannot provide alone).
+
+### Starting state
+| Repo | Branch | Starting commit |
+|---|---|---|
+| root | main | `4a1bb8c` |
+| blend_ode | dinesh_thamill_blend360india_sow_editor | `0a0d6d7` |
+| blend_ode_be | dinesh_thamill_blend360india_sow_editor | `2e151b3` |
+
+All three already matched `origin` at session start (contrary to the prior session's "not pushed"
+note — they had been pushed sometime after that entry was written, before this session began).
+`blend_ode` had `.env.development` locally modified (pre-existing, untouched — see KNOWN_ISSUES #1);
+`blend_ode_be` had an untracked `venv/` (pre-existing, left alone).
+
+### Files inspected
+`sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md` (CP-40 through CP-74, to brief the user on the
+remaining roadmap and model choice), `sow_docs/tracking/phaseD_report.md` (CP-39's manual test
+script), `SowCollabProvider.ts`, `connection.ts` (Owner awareness relay), `LexicalDraftEditor.tsx`,
+`DraftChrome.tsx`, existing provider/chrome tests, and the installed `@lexical/yjs` package source
+(to confirm the exact fields — flat `name`/`color` — its own cursor sync writes to awareness state,
+rather than assuming).
+
+### Files created / modified
+| Repo | Path | Change |
+|---|---|---|
+| blend_ode | `src/sow_module/editor/SowCollabProvider.ts` | awareness throttle, `PresenceUser`, `presence` getter |
+| blend_ode | `src/sow_module/editor/DraftChrome.tsx` | `PresenceStack` component |
+| blend_ode | `src/sow_module/editor/LexicalDraftEditor.tsx` | wires presence into state and the status row |
+| blend_ode | `src/sow_module/editor/jestGlobals.ts` | added a `matchMedia` shim |
+| blend_ode | `src/sow_module/editor/__tests__/SowCollabProvider.test.ts` | throttle, presence, 5 MB browser-level tests |
+| blend_ode | `src/sow_module/editor/__tests__/DraftChrome.test.tsx` | new — `PresenceStack` tests |
+| blend_ode_be | `sow_module/collab/src/server.test.ts` | two-client awareness relay test |
+
+### Implementation summary
+See `prompt_log.md`'s new CP-40 entry for full detail, including the decision not to use antd's
+`Avatar.Group` `max` prop (and, it turned out, `Avatar.Group` itself needing a `matchMedia` shim).
+
+### Commands executed
+```
+npm install                                             # blend_ode and sow_module/collab (node_modules absent at session start)
+npx tsc --noEmit                                        # both repos, clean
+CI=true npm test -- --testPathPattern=sow_module         # blend_ode
+npx vitest run                                           # sow_module/collab
+npx eslint src/sow_module/editor --ext .ts,.tsx          # blend_ode
+npx eslint src                                           # sow_module/collab
+CI=false npm run build                                   # blend_ode
+PYTHON=./venv/Scripts/python.exe bash sow_module/run_checks.sh   # blend_ode_be
+```
+
+### Tests performed and actual results
+- Frontend `sow_module` Jest: **180 passed, 2 failed** (pre-existing CRLF/hash-drift false
+  failures — `sharedDrift.test.ts`, `roles.test.ts` — confirmed via `git diff --ignore-all-space`
+  showing zero real content difference; not caused by this session). A third test
+  (`SowLexicalHarness.test.tsx`) timed out once and passed on a repeat run — a pre-existing flake.
+- Collab Vitest: **77 passed, 6 skipped** (was 76 before this session; +1 new test). Lint/typecheck/
+  module-boundary all clean.
+- Backend `sow_module` pytest subset (the 8 files `run_checks.sh` runs): **115 passed, 1 failed** —
+  same CRLF/hash family as above (`test_sow_module_shared_drift.py`); no Python file was touched.
+- `npx tsc --noEmit`: clean in both repos. ESLint: clean (one pre-existing, unrelated warning in a
+  file not touched this session). Production build: succeeds.
+
+### Commits
+| Repo | Commit hash | Message |
+|---|---|---|
+| blend_ode | `dd18554` | feat(sow_module): CP-40 presence, awareness throttle, browser-level 5MB test |
+| blend_ode_be | `b163eb4` | test(sow_module): CP-40 two-client awareness relay proof |
+
+### Push status
+**Not pushed** — awaiting explicit authorization, per standing instruction.
+
+### Unresolved issues
+- CP-39's two-user manual test: still not run (deferred by the user this session, not forgotten).
+- New, pre-existing (not introduced here): `core.autocrlf=true` on this checkout breaks hash-exact
+  parity/drift tests in both repos with false failures. See `KNOWN_ISSUES_AND_BLOCKERS.md` #13 — not
+  fixed this session, needs the owner's sign-off on the approach.
+- Everything else CP-40 previously left open (outside-change room reload design, server-side list
+  depth cap, merged-cell export) is unchanged by this session.
+
+### Recommended next actions
+1. Confirm the push plan for `dd18554`/`b163eb4` (and the still-unpushed earlier CP-40-partial work),
+   then push if authorized.
+2. CP-41 (reconnect, offline editing, saving state) — Sonnet 5.5, per the user's own
+   budget-optimization choice this session.
+3. Decide on the `core.autocrlf` fix (`.gitattributes` vs. git config) so the drift tests stop
+   false-failing on this and future Windows checkouts.
+
+---
+
 ## Session: 2026-11-09 to 2026-11-11 — CP-26 to CP-40 (partial), table/print/A4 fixes, Phase D
 
 - **Agent/tool**: Claude Code (Claude, several models during the session; `/model` changes are in the chat)

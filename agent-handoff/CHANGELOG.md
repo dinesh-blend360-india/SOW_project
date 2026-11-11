@@ -137,3 +137,18 @@ own `git log` for that history; it is not transcribed here.
 ### Root
 - `docs(sow_module)` CP-26 to CP-39 logs; `core_api_freeze.md`; `phaseD_report.md` (`ed04323` to `f114978`)
 - `chore` ignore the local to-do file (`6ea7448`)
+
+---
+
+## 2026-11-11 — CP-40 completed
+
+### blend_ode (frontend)
+- `feat(sow_module)` awareness throttle (200ms trailing window), presence list read from Yjs
+  awareness state, `PresenceStack` avatars in the page chrome; browser-level 5 MB chunked-sync test;
+  `matchMedia` jsdom shim for antd's `Avatar.Group` (`dd18554`)
+
+### blend_ode_be (backend, incl. the collab Node service)
+- `test(sow_module)` two-real-client awareness relay test in the collab service (`b163eb4`)
+
+CP-40 is now complete. Still open from CP-39: the two-user manual test (explicitly deferred by the
+user this session, not forgotten) — see `TASK_BOARD.md` and `sow_docs/tracking/phaseD_report.md`.

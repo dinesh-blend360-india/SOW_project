@@ -159,3 +159,16 @@ BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
   Status: BLOCKED on a design decision.
 - **NEW — PUSH:** all three repos have local commits not pushed. Status: BLOCKED on user authorization.
 - **Next:** finish CP-40, then CP-41 (per the build plan).
+
+## Update 2026-11-11 (later)
+- **SOW-CP40: COMPLETED.** Awareness throttle, presence list/UI, two-client cursor proof (automated,
+  server-level), browser-level 5 MB test. `blend_ode` `dd18554`, `blend_ode_be` `b163eb4`.
+- **CP-39 two-user manual test: still NOT_STARTED**, explicitly deferred by the user this session
+  (needs live services + two real SSO accounts). Not blocked technically — blocked on scheduling/
+  access, same as before.
+- **NEW — INFRA-CRLF-HASH:** this checkout's `core.autocrlf=true` breaks the shared-drift/parity
+  hash tests in both repos (false failure, confirmed no real content difference). See
+  `KNOWN_ISSUES_AND_BLOCKERS.md` #13. Status: NOT_STARTED, needs owner sign-off on the fix (a
+  `.gitattributes` entry or a git config change), not something to silently patch mid-feature-work.
+- **Next, per the user's own budget-optimization decision this session:** CP-41 (reconnect, offline
+  editing, saving state), Sonnet 5.5 — see `prompt_log.md`'s CP-40 entry for the reasoning.

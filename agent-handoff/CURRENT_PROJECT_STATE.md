@@ -101,3 +101,17 @@ to the SOW module work but are relevant to anyone continuing development here.
 - **Not verified in a running system:** the two-user manual test (CP-39 script), real two-browser cursors,
   and anything needing the backend and collab service running together.
 - **Not pushed:** local commits in all three repos. See TASK_BOARD `PUSH`.
+
+## Update 2026-11-11 (later)
+- **CP-40 is now complete.** Awareness throttle (200ms), presence list and avatar UI, an automated
+  two-client awareness/cursor relay proof (server-level, no real browsers needed), and a
+  browser-level 5 MB chunked-sync test (the earlier one was server-only). `blend_ode` `dd18554`,
+  `blend_ode_be` `b163eb4`. Not pushed yet.
+- **CP-39's two-user manual test is still not done** — the user explicitly deferred it this session
+  (it needs live services and two real SSO-authenticated accounts, neither of which this session can
+  provide alone).
+- **New environment finding, not a regression:** this checkout has `core.autocrlf=true`, which makes
+  two hash-exact-match tests (one per repo) and `sync_shared.sh --check` fail on pure line-ending
+  noise, not real content drift (verified with `git diff --ignore-all-space`). See
+  `KNOWN_ISSUES_AND_BLOCKERS.md` #13.
+- **Next:** CP-41 (reconnect, offline editing, saving state).
