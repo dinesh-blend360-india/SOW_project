@@ -842,3 +842,17 @@ Handoff to next prompt: next checkpoint not yet chosen. Per the earlier budget-s
 CP-44 (multi-instance socket routing) and CP-46/47 (scale harness/measurements) remain recommended to
 defer; CP-48 (intake pipeline consolidation) or CP-51 (legacy drafts open safely) are the next
 reasonable picks if continuing the build plan.
+
+## CP-48: production intake pipeline — completed (2026-11-11)
+Most of CP-48 (shared/intake.ts, both paste.ts and editorApi.ts sharing it, the Python parity pytest
+`test_sow_module_html_parity.py`) was already built in CP-13/14/31/36 — verified, not rebuilt. Real
+gaps closed: fast-check fuzzing was missing the `text` format, and the hostile fixture corpus (CP-12)
+was only exercised against `sanitizeHtml` directly, never through the full `intake()` pipeline
+(markdown-it rendering / text escaping ahead of the allowlist). Added both to `testing/intake.test.ts`
+(33 tests now pass, up from 31; `blend_ode` only, no backend/shared-contract change needed since
+`testing/` isn't vendored). CP-48's own task 2 text ("the Owner applies intake output as one Yjs
+transaction... meta.source of author, code or llm") describes CP-49's scope (the LLM/generated-content
+insert endpoint), not something client-side paste/add-ins needed — not attempted here, flagged as
+CP-49's job. Commit: blend_ode `dcd69eb`.
+Handoff: CP-49 (LLM insert) remains the deferred next-feature item; CP-51 (legacy drafts) is the other
+reasonable pick.

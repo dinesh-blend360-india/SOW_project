@@ -160,3 +160,10 @@ to the SOW module work but are relevant to anyone continuing development here.
   a clear message when a session closes this way, instead of a bare "Offline" status.
   `blend_ode_be` commit `98438f2`, `blend_ode` commit `e9ff19b`. Not pushed yet.
 - **Next:** not yet chosen by the user. CP-44 and CP-46/47 remain recommended to defer.
+
+## Update 2026-11-11 (CP-48)
+- **CP-48 is now complete.** Verified most of it (intake.ts, paste.ts/editorApi.ts sharing one
+  pipeline, the Python parity pytest) was already built in earlier checkpoints; added the two real
+  gaps found — a text-format fast-check fuzz test and the hostile fixture corpus run through the
+  full `intake()` pipeline, not just `sanitizeHtml`. `blend_ode` only, commit `dcd69eb`. Not pushed.
+- **Next:** not yet chosen by the user.

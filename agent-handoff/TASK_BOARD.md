@@ -242,3 +242,8 @@ BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
   `blend_ode_be` commit `98438f2`, `blend_ode` commit `e9ff19b`.
 - **Next:** not yet chosen by the user. CP-44 and CP-46/47 remain recommended to defer; CP-48 or
   CP-51 are the next reasonable picks if continuing the build plan sequentially.
+
+## Update 2026-11-11 (CP-48)
+- **SOW-CP48: COMPLETED.** Mostly already built (CP-13/14/31/36); closed the two real gaps (text-format
+  fuzzing, hostile corpus through the full intake pipeline). `blend_ode` commit `dcd69eb`.
+- **Next:** CP-49 (LLM insert) or CP-51 (legacy drafts) if continuing the build plan.

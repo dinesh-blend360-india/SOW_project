@@ -212,3 +212,12 @@ checkpoint and its own review were done entirely on Sonnet.
 ### blend_ode (frontend)
 - `feat(sow_module)` `describeSessionCloseCode`: a clear message when a live session closes because
   access was removed or the SOW was finalized, instead of a bare "Offline" status. (`e9ff19b`)
+
+---
+
+## 2026-11-11 — CP-48 completed
+
+### blend_ode (frontend)
+- `test(sow_module)` CP-48: verified the intake pipeline/parity test were already built (CP-13/14/31/
+  36); added the two real gaps — text-format fuzzing and the hostile corpus through `intake()`
+  itself, not just `sanitizeHtml`. (`dcd69eb`)
