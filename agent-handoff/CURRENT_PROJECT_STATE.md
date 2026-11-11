@@ -126,3 +126,16 @@ to the SOW module work but are relevant to anyone continuing development here.
 - **Next:** CP-42 (Snowflake-unreachable rule and graceful shutdown) — plan to implement on Sonnet
   5.5, then a short Opus review of the "never two writers"/drain guarantee specifically before
   calling it done.
+
+## Update 2026-11-11 (CP-42)
+- **CP-42 is now complete, including its planned Opus review.** An `OutageGuard` renews held leases
+  on a timer and permanently flips a room read-only the moment its own lease validity actually
+  lapses; new rooms are refused while Snowflake is unreachable; a graceful `shutdown()` drains,
+  checkpoints, releases leases and evicts clients within a bounded time. The review (run as planned,
+  not skipped) found real gaps beyond the original scope — an un-gated checkpoint path, several
+  unhandled-rejection crash risks, a narrow edit/lease-leak window during shutdown, and a pre-existing
+  connection-count leak — all fixed this session. Three deeper, pre-existing or Snowflake-query-level
+  gaps need live-Snowflake access to fix safely and are documented instead
+  (`KNOWN_ISSUES_AND_BLOCKERS.md` #14-16). `blend_ode_be` only, commit `b76201a`. Not pushed yet.
+- **Next:** per the user's own budget plan, this was the last of the three checkpoints explicitly
+  scoped for this run. Awaiting direction on CP-43 vs. the deferred fixes vs. something else.

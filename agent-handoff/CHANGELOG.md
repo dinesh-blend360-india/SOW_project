@@ -164,3 +164,22 @@ user this session, not forgotten) — see `TASK_BOARD.md` and `sow_docs/tracking
 
 No backend/collab change this checkpoint. Next: CP-42 (Snowflake-unreachable rule, graceful
 shutdown).
+
+---
+
+## 2026-11-11 (latest) — CP-42 completed, with an Opus correctness review
+
+### blend_ode_be (backend, the collab Node service)
+- `feat(sow_module)` the Snowflake-unreachable rule (`OutageGuard`: periodic lease renewal, a
+  permanent read-only latch once a room's own lease validity lapses) and graceful shutdown
+  (`CollabService.shutdown()`: drain, checkpoint, release leases, evict clients, bounded by a
+  timeout with a hard-exit backstop). Hardened after a targeted Opus review found and this session
+  fixed: an un-gated checkpoint path on a read-only room, several unhandled-rejection crash risks,
+  a narrow edit/lease-leak window during shutdown, and a pre-existing (CP-24) room_full connection
+  leak. Three deeper, pre-existing or Snowflake-query-level gaps need live-Snowflake verification
+  and are documented instead of fixed blind — see `KNOWN_ISSUES_AND_BLOCKERS.md` #14-16.
+  (`b76201a`)
+
+This was the last of the three checkpoints explicitly scoped for this session's budget plan
+(CP-40/41 on Sonnet, CP-42 Sonnet + a short Opus review). Next checkpoint and model: to be decided
+with the user.

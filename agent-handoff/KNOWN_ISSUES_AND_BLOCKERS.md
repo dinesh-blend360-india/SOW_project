@@ -168,6 +168,71 @@ deliberately.
   session — it's outside CP-40's scope and changes shared config, so it needs the project owner's
   sign-off rather than a silent fix alongside unrelated work.
 
+## 14. CP-42's outage-detection remains an approximation, not an exact per-document proof (High, mitigated)
+
+- **Repository**: `blend_ode_be` (`sow_module/collab`)
+- **Impact**: High in principle, mitigated in practice. Found by an Opus review of CP-42
+  (2026-11-11), requested specifically to scrutinize the single-writer guarantee. `LeaseManager
+  .renewAll()` calls one batched `store.renewLeases(holderId, ttlMs)` across every lease this
+  process holds; Snowflake's own `UPDATE ... WHERE HOLDER_TASK_ID=? AND EXPIRES_ON >
+  CURRENT_TIMESTAMP()` silently skips a row that already expired or that another process already
+  took over, without the call itself throwing. `renewAll()` cannot tell the difference between "all
+  N leases were actually renewed" and "0 were renewed but the call still succeeded," so it
+  optimistically refreshes every held lease's locally-tracked expiry regardless. A sustained Snowflake
+  hang (no client-side timeout before this session added one to `OutageGuard`'s own sweep, but the
+  underlying Snowflake connection/pool itself still has none) or a long process stall (GC pause, VM
+  pause) past the lease TTL could let this process believe it still safely owns a document after
+  another process has actually taken over.
+- **What CP-42 actually did about it** (this session, after the review): the real-time backstop is
+  `PersistQueue`'s `onFenced` callback (wired in `server.ts`) — the moment an actual write is
+  rejected as stale (`StaleFencingError`), the room flips read-only and every connection for it is
+  evicted immediately, not on the next 10-second sweep. `CheckpointCoordinator.run()` now also
+  refuses to checkpoint any `room.readOnly` document, closing the more severe gap the review found
+  (an un-gated checkpoint is an unprotected second write to `SOW_DRAFT_VERSIONS`, since FastAPI's own
+  checkpoint endpoint does not independently re-verify fencing — see item #7 below, the same root
+  cause). `renewAll()` also now takes its timestamp before the network call, not after, removing one
+  source of extra optimism, and `OutageGuard.tick()` now times out a hung renewal rather than waiting
+  on it forever.
+- **What's still open**: a real fix needs the store to report *which specific documents* were
+  actually renewed (e.g. a `SELECT DEAL_ID, FENCING_TOKEN, EXPIRES_ON WHERE HOLDER_TASK_ID=?` on the
+  same connection, used to refresh only the matching rows and drop the rest from `held`) — not done
+  this session; it touches `SnowflakeDataStore` in a way that needs live-Snowflake verification, not
+  just a desk check. Until then, the protection against a genuine split-brain write is the `onFenced`
+  backstop above, which is real-time but still reactive (it only fires once a write is actually
+  attempted and rejected, not proactively).
+- **Possible resolution**: implement the per-document renewal result described above; add a
+  client-side timeout to the Snowflake connection/pool itself, not just to the renewal sweep.
+
+## 15. `PersistQueue.flush()` has a pre-existing overlapping-flush race (High for durability)
+
+- **Repository**: `blend_ode_be` (`sow_module/collab`)
+- **Impact**: High for durability, not for the single-writer guarantee specifically. Found during
+  the same CP-42 review, in code that predates CP-42 (CP-22). The 250ms interval in `start()` begins
+  a new `flushOne(dealId)` call without checking whether a previous call for the same `dealId` is
+  still in flight. On a successful `appendUpdates`, `flushOne` does `this.pending.delete(dealId)` —
+  deleting the *entire* array, including any update enqueued during the `await` that was never part
+  of the `rows` just sent. That update is silently lost. Two overlapping flushes can also both read
+  and send overlapping rows under different seq numbers. This is unlikely to show up under light,
+  steady editing (one edit every ~250ms rarely overlaps), but becomes likely during exactly the
+  moment CP-42 cares about: catching up a backlog after an outage, when Snowflake's one-MERGE-per-row
+  writes make a single flush call take several seconds.
+- **Possible resolution**: track an in-flight flag per `dealId`; on completion, `splice` out only the
+  rows actually included in that flush's request rather than deleting the whole pending array, so
+  anything enqueued mid-flush survives to the next tick.
+
+## 16. `SnowflakeDataStore.appendUpdates`'s fencing check is not atomic with the write (Medium-high)
+
+- **Repository**: `blend_ode_be` (`sow_module/collab`)
+- **Impact**: Medium-high, pre-existing (predates CP-42), surfaced by the same review. The fencing
+  check does a `SELECT` of the current lease, then a separate `MERGE`/insert of the update rows, with
+  no transaction spanning both. A lease takeover landing in the gap between the two statements could
+  pass the fencing check against a now-stale token. This weakens (does not eliminate — the lease TTL
+  and renewal cadence still bound the exposure window) the backstop CP-42's `onFenced` handling and
+  item #14 above both lean on.
+- **Possible resolution**: wrap the check-then-write in a single transaction, or push the fencing
+  check into the `MERGE`'s own `WHEN MATCHED` condition so it is atomic with the write by
+  construction. Needs live-Snowflake verification; not safe to change from a desk review alone.
+
 ## Update 2026-11-11
 - **OPEN:** a change to the draft made outside the editor is refused by the Owner and shown as a notice;
   the room is not reloaded. Users must reload the page. Needs a design before the Owner can reset a room.

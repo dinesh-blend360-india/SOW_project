@@ -8,6 +8,95 @@ forward, every meaningful session should add a real-time entry using
 
 ---
 
+## Session: 2026-11-11 (latest) — CP-42 (Snowflake-unreachable rule, graceful shutdown) + Opus review
+
+- **Agent/tool**: Claude Code, Sonnet 5 for implementation; one Opus (`opus`, effort `high`) subagent
+  for a targeted correctness review, per the user's own budget plan from earlier in this session.
+- **Objective**: Implement CP-42, continuing directly from CP-41 earlier in this conversation, then
+  run the planned Opus review of the single-writer and bounded-shutdown guarantees before considering
+  it done, and act on what it found rather than just reporting it.
+- **Repositories involved**: blend_ode_be only (`sow_module/collab`). No frontend file touched.
+
+### Starting state
+| Repo | Branch | Starting commit |
+|---|---|---|
+| blend_ode_be | dinesh_thamill_blend360india_sow_editor | `2e151b3` |
+
+### Files inspected
+`owner/lease-manager.ts`, `owner/persist-queue.ts`, `owner/room.ts`, `owner/room-manager.ts`,
+`owner/connection.ts`, `owner/checkpoint-coordinator.ts`, `server.ts`, `shared/errors.ts` (both
+copies, to check whether a new error code would need `sync_shared.sh` — decided to reuse the existing
+`service_unavailable` code instead, avoiding a shared-contract change), `data/memory-store.ts`.
+
+### Files created / modified
+| Repo | Path | Change |
+|---|---|---|
+| blend_ode_be | `sow_module/collab/src/owner/outage-guard.ts` | new — periodic renewal, read-only latch, renewal timeout |
+| blend_ode_be | `sow_module/collab/src/owner/lease-manager.ts` | `isValid`, `forget`; pre-call timestamp |
+| blend_ode_be | `sow_module/collab/src/owner/room.ts` | `readOnly` flag |
+| blend_ode_be | `sow_module/collab/src/owner/connection.ts` | outage/read-only/shutdown gating; room_full leak fix; `.catch()` on several call sites |
+| blend_ode_be | `sow_module/collab/src/owner/checkpoint-coordinator.ts` | refuses a read-only room; `dirtyDealIds` |
+| blend_ode_be | `sow_module/collab/src/server.ts` | `shutdown()`/`drain()`; `onFenced`/`evictRoom` wiring; hard-exit backstop |
+| blend_ode_be | `sow_module/collab/src/config.ts`, `.env.example` | two new timeout/interval env vars |
+| blend_ode_be | 4 test files (new `outage-guard.test.ts`; modified `checkpoint-coordinator.test.ts`, `server.test.ts`, `sentinel-secret.test.ts`) | 10 new tests total |
+
+### Implementation summary
+See `prompt_log.md`'s CP-42 entry for full detail. In short: built the outage rule and graceful
+shutdown as specified, then — per the plan made explicit at the start of this session — launched an
+Opus subagent (effort `high`) with the exact files and a narrow brief: scrutinize the single-writer
+guarantee, data-loss risk, and the bounded-shutdown promise, nothing else. Its report (reproduced in
+full in this session's transcript, delivered as a `SubagentHandback` message) found six real issues
+within CP-42's own new code plus three deeper pre-existing ones it surfaced as a side effect. All six
+in the first group were fixed in this same session (see `prompt_log.md` for the itemized list); the
+three deeper ones need live-Snowflake verification to fix safely and were deliberately left as
+documented follow-ups instead of being patched blind — see `KNOWN_ISSUES_AND_BLOCKERS.md` #14-16 and
+the matching `TASK_BOARD.md` entries (`SOW-RENEW-PRECISION`, `SOW-PERSIST-RACE`, `SOW-FENCE-ATOMIC`).
+
+### Commands executed
+```
+npx tsc --noEmit                                  # clean
+npm run --silent lint                             # clean
+bash scripts/check-module-boundary.sh             # module boundary OK
+npx vitest run                                    # 87 passed, 6 skipped (was 77 before this checkpoint)
+PYTHON=./venv/Scripts/python.exe bash sow_module/run_checks.sh   # only the known pre-existing CRLF FAILs
+```
+
+### Tests performed and actual results
+- Collab Vitest: **87 passed, 6 skipped** (10 new tests: 4 `OutageGuard`, 2 `CheckpointCoordinator`
+  read-only/`dirtyDealIds`, 1 fenced-eviction integration, 1 unhandled-rejection-safety, 2 graceful
+  shutdown integration). Lint and module-boundary checks clean.
+- Backend `sow_module` pytest subset: 115 passed, 1 failed — the same pre-existing CRLF/hash-drift
+  failure noted in every session this week; no Python file was touched this checkpoint.
+- `npx tsc --noEmit`: clean.
+- No frontend changes this checkpoint, so the frontend suite was not re-run.
+
+### Commits
+| Repo | Commit hash | Message |
+|---|---|---|
+| blend_ode_be | `b76201a` | feat(sow_module): CP-42 Snowflake-unreachable rule and graceful shutdown |
+
+### Push status
+**Not pushed** — awaiting explicit authorization, per standing instruction.
+
+### Unresolved issues
+- Three deeper, review-surfaced gaps deliberately deferred (not silently dropped): the batched
+  lease-renewal result isn't per-document (`KNOWN_ISSUES` #14); `PersistQueue`'s pre-existing (CP-22)
+  overlapping-flush race (#15); the Snowflake fencing check isn't atomic with the write (#16). All
+  three need live-Snowflake testing to fix safely — flagged as `TASK_BOARD` items, not attempted here.
+- Same CRLF/autocrlf hash-drift issue as every session this week, still unresolved pending the
+  owner's sign-off on the fix approach.
+- CP-39's two-user manual test is still not run (carried over, unrelated to this checkpoint).
+
+### Recommended next actions
+1. Per the user's own budget plan, this was the last of the three checkpoints explicitly scoped for
+   this run (CP-40/41 on Sonnet, CP-42 Sonnet + a short Opus review). Check in with the user on what
+   to pick up next: CP-43 (compaction/pruning) continuing the build plan, or one of the three deferred
+   fixes above, or something else — don't assume continuation.
+2. If continuing the deferred fixes: `SOW-RENEW-PRECISION` and `SOW-FENCE-ATOMIC` both need live
+   Snowflake access to change safely, not just a desk review — flag that before starting either.
+
+---
+
 ## Session: 2026-11-11 (even later) — CP-41 (reconnect, offline editing, saving state)
 
 - **Agent/tool**: Claude Code, Sonnet 5

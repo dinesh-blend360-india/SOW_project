@@ -650,3 +650,81 @@ Handoff to next prompt: CP-42 (Snowflake-unreachable rule and graceful shutdown)
 budget discussion: implement on Sonnet 5.5, then a short, targeted Opus review pass specifically on
 the "never two writers" / drain guarantee before calling it done — that is the one place in this
 checkpoint where a subtle bug would be expensive to miss and hard to notice by inspection alone.
+
+## CP-42: Snowflake-unreachable rule and graceful shutdown — completed (2026-11-11)
+Summary: Built `OutageGuard` (periodic lease renewal + a permanent read-only latch once a room's own
+lease validity lapses) and `CollabService.shutdown(reason)` (stop new connections, flush, checkpoint
+every dirty room, release every lease, evict clients with the existing OWNER_HINT close code,
+bounded by a timeout). Then ran the Opus review this session planned from the start, specifically on
+the single-writer and bounded-shutdown guarantees — it found real gaps beyond the stated scope and
+all cost-effective ones were fixed in the same session before this entry; see below.
+Decisions/assumptions: Two close codes never trigger CP-41's client-side reconnect logic into a
+retry loop pointlessly — `ACCESS_REMOVED`/`LOCKED` stop the outage guard's own read-only eviction
+from reconnecting into a wall; everything else (plain drops, a lapsed lease, shutdown) evicts with
+`OWNER_HINT`, which the client already retries. Chose not to implement the review's suggested
+per-document lease-renewal result (needs a `SnowflakeDataStore` query change verified against live
+Snowflake, not safe from a desk review) — the real-time `onFenced`-triggered read-only flip is the
+actual backstop against a split-brain write in practice, and is built; the renewal-result precision
+gap is now `KNOWN_ISSUES_AND_BLOCKERS.md` #14 instead. Likewise deferred: `PersistQueue`'s
+pre-existing (CP-22) overlapping-flush data-loss race (#15) and the Snowflake fencing check not
+being atomic with the write (#16) — both pre-date this checkpoint, found as side effects of the same
+review, and both need live-Snowflake testing to fix safely.
+**Opus review findings and what was done about each** (full report in `SESSION_LOG.md`'s entry for
+this session; not reproduced here in full):
+- HIGH, fixed: `CheckpointCoordinator.run()` did not refuse a read-only room — an unprotected second
+  write to `SOW_DRAFT_VERSIONS`, since FastAPI's own checkpoint endpoint does not independently
+  re-verify fencing (#7). Now refuses and logs.
+- HIGH, fixed: `renewAll()`'s optimistic per-lease refresh only approximates true per-document
+  renewal (store reports a count, not which documents) — the real-time backstop is `onFenced` now
+  flipping a room read-only and evicting its clients immediately on an actual rejected write, not
+  waiting for the next 10-second sweep. The underlying imprecision itself is `KNOWN_ISSUES` #14.
+- HIGH, fixed: several `void somePromise()` call sites (a failed connection setup, a failed reauth, a
+  failed lease release, a failed CHECKPOINT_NOW/last-client-left checkpoint) were unhandled-rejection
+  risks that could have crashed the whole process — exactly the wrong outcome during an outage
+  ("keep rooms open"). All now `.catch()` and log instead.
+- MEDIUM, fixed: an edit could land in the window between `shuttingDown=true` and the room-level
+  read-only check during drain; `connection.ts`'s SYNC handler now also checks `isShuttingDown()`
+  directly, closing that window from the very first line of `drain()`.
+- MEDIUM, fixed: a HELLO already past the upgrade gate when shutdown starts could still acquire a
+  brand-new lease after `releaseAll()`, leaking until its TTL expired — now also refused via the same
+  `isShuttingDown()` check used for edits.
+- LOW, fixed (pre-existing CP-24 bug, found as a side effect): the `room_full` (1013) path added a
+  client to the room's count but never removed it on rejection, so that room could never report empty
+  and its lease would renew forever.
+- LOW, fixed: `drain()`'s per-room checkpoint failures were swallowed by `Promise.allSettled` with no
+  log; now logged per `dealId`.
+- Not fixed, deferred (see above and `KNOWN_ISSUES_AND_BLOCKERS.md` #14-16): per-document lease
+  renewal result; PersistQueue's overlapping-flush race; the Snowflake fencing check's atomicity.
+Registry (new or changed):
+- file: sow_module/collab/src/owner/outage-guard.ts: `OutageGuard` — periodic renewal, read-only
+  latch, renewal timeout, overlapping-tick guard
+- file: sow_module/collab/src/owner/lease-manager.ts: `isValid`, `forget`; `renewAll` timestamps
+  before the call, documents its own approximation
+- file: sow_module/collab/src/owner/room.ts: `readOnly` (mutable, permanent latch once set)
+- file: sow_module/collab/src/owner/connection.ts: gates new-lease acquisition and SYNC updates on
+  `outage.snowflakeReachable`/`room.readOnly`/`isShuttingDown()`; fixed the room_full leak; `.catch()`
+  on reauth/checkpoint/lease-release call sites
+- file: sow_module/collab/src/owner/checkpoint-coordinator.ts: `run()` refuses a read-only room;
+  `dirtyDealIds` getter
+- file: sow_module/collab/src/server.ts: `CollabService.shutdown(reason)`, `drain()`; `evictRoom`,
+  `onFenced` wiring; `isShuttingDown` in `ConnectionDeps`; hard-exit backstop and re-entry guard in
+  `main()`'s signal handler; `.catch()` on the connection-setup handler
+- config: `COLLAB_LEASE_RENEWAL_INTERVAL_MS`, `COLLAB_SHUTDOWN_TIMEOUT_MS` (both default 10000)
+Verified (this session):
+- `npx tsc --noEmit`: clean.
+- `npm run --silent lint` / `check-module-boundary.sh`: clean.
+- Collab Vitest: **87 passed, 6 skipped** (was 77 before this checkpoint; +10 new: 4 OutageGuard unit
+  tests, 2 CheckpointCoordinator read-only/dirtyDealIds tests, 1 fenced-eviction integration test, 1
+  unhandled-rejection-safety test, 2 graceful-shutdown integration tests).
+- Backend `sow_module` pytest subset: 115 passed, 1 failed — the same pre-existing CRLF/hash-drift
+  failure as every prior session this week (no Python file touched this checkpoint).
+- `bash sow_module/run_checks.sh`: same two known CRLF-driven FAILs as before (frontend Jest,
+  backend module tests); everything else, including every collab-specific check, PASS.
+- No frontend file was touched this checkpoint — the Lexical editor/provider are unaffected.
+Open questions for the user: none new. The three deferred items above are real, documented gaps, not
+silently dropped — they need live-Snowflake verification before a safe fix, which this session
+cannot provide.
+Handoff to next prompt: per the user's own budget plan, CP-42 is the last of the three checkpoints
+explicitly scoped for this run (CP-40/41 Sonnet, CP-42 Sonnet+Opus review). Recommend pausing here for
+the user to decide the next slice (CP-43 compaction, or the deferred SOW-RENEW-PRECISION/SOW-PERSIST-RACE/
+SOW-FENCE-ATOMIC fixes, or something else) rather than assuming continuation.

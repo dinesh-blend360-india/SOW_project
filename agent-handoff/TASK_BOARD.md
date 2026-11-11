@@ -58,6 +58,42 @@ new entries.
 - **Acceptance criteria**: `checkpoint` rejects a request whose `fencingToken` doesn't match the
   live `SOW_COLLAB_LEASE` row for that deal, with a test proving it.
 
+### SOW-RENEW-PRECISION: Per-document lease renewal result, not a batched count
+- **Priority**: High
+- **Affected repository**: blend_ode_be (`sow_module/collab`)
+- **Dependencies**: live Snowflake access to verify the query change safely
+- **Relevant files**: `sow_module/collab/src/data/snowflake-store.ts` (`renewLeases`),
+  `sow_module/collab/src/owner/lease-manager.ts` (`renewAll`)
+- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #14. `renewAll()` can't currently tell "every
+  held lease was actually renewed" apart from "the call succeeded but renewed none of them" — it
+  optimistically refreshes all of them either way. The real-time `onFenced` backstop (built in CP-42)
+  covers the worst consequence (an unprotected second write), but the underlying imprecision remains.
+- **Acceptance criteria**: `renewLeases` (or an added method) reports which specific `dealId`s were
+  actually renewed; `LeaseManager.renewAll()` only refreshes those, and calls `forget()` on any held
+  lease that was not renewed back.
+
+### SOW-PERSIST-RACE: Fix PersistQueue's overlapping-flush data loss
+- **Priority**: High
+- **Affected repository**: blend_ode_be (`sow_module/collab`)
+- **Dependencies**: none technical
+- **Relevant files**: `sow_module/collab/src/owner/persist-queue.ts`
+- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #15. Pre-existing (CP-22), surfaced by CP-42's
+  review. A flush in flight does not stop the next interval tick from starting another for the same
+  document, and a successful flush deletes the whole pending array rather than only the rows it sent
+  — an update enqueued mid-flush is silently lost.
+- **Acceptance criteria**: an in-flight guard per `dealId`; a completed flush removes only the rows it
+  actually sent; a test proving an edit enqueued during an in-flight flush survives to the next tick.
+
+### SOW-FENCE-ATOMIC: Make the Snowflake fencing check atomic with the write
+- **Priority**: Medium-high
+- **Affected repository**: blend_ode_be (`sow_module/collab`)
+- **Dependencies**: live Snowflake access to verify safely
+- **Relevant files**: `sow_module/collab/src/data/snowflake-store.ts` (`appendUpdates`)
+- **Description**: See `KNOWN_ISSUES_AND_BLOCKERS.md` #16. The fencing check (`SELECT`) and the write
+  (`MERGE`/insert) are two separate statements, not one transaction.
+- **Acceptance criteria**: the check and the write happen atomically (one transaction, or the check
+  folded into the `MERGE`'s own match condition).
+
 ### INFRA-SECRET-ROTATE: Rotate and scrub secrets committed in `blend_ode`
 - **Priority**: High (security)
 - **Affected repository**: blend_ode
@@ -179,3 +215,12 @@ BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
   `blend_ode` commit: see `SESSION_LOG.md`. No backend/collab change this checkpoint.
 - **Next:** CP-42 (Snowflake-unreachable rule, graceful shutdown) — Sonnet 5.5 to implement, then a
   short Opus review specifically on the single-writer/drain guarantee before marking it done.
+
+## Update 2026-11-11 (CP-42)
+- **SOW-CP42: COMPLETED**, including the planned Opus review and fixes for everything it found that
+  was safe to fix without live Snowflake access. `blend_ode_be` commit `b76201a`.
+- **NEW — SOW-RENEW-PRECISION, SOW-PERSIST-RACE, SOW-FENCE-ATOMIC: NOT_STARTED** (added above in this
+  update). All three need live-Snowflake verification before a safe fix — see
+  `KNOWN_ISSUES_AND_BLOCKERS.md` #14-16.
+- **Next:** per the user's own budget plan, this was the last of the three explicitly scoped
+  checkpoints for this run. Check in with the user before picking CP-43 or one of the deferred fixes.
