@@ -233,3 +233,12 @@ BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
 - **User direction this session: Sonnet 5.5 only from here, no Opus**, for cost reasons — noted for
   future sessions' model-choice planning, not just this one.
 - **Next:** not yet chosen by the user.
+
+## Update 2026-11-11 (CP-45)
+- **SOW-CP45: COMPLETED.** Periodic per-connection access re-check, the `/internal/access-changed`
+  hook FastAPI's `notify_access_changed` already called into nothing, and a revocation-poll backstop.
+  Frontend gained a clear message when a live session closes for lost access or finalize. Drive-by
+  fix: `CheckpointReason` was missing `'shutdown'` (CP-42 had been passing `'explicit'` instead).
+  `blend_ode_be` commit `98438f2`, `blend_ode` commit `e9ff19b`.
+- **Next:** not yet chosen by the user. CP-44 and CP-46/47 remain recommended to defer; CP-48 or
+  CP-51 are the next reasonable picks if continuing the build plan sequentially.

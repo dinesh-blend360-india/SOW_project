@@ -8,6 +8,95 @@ forward, every meaningful session should add a real-time entry using
 
 ---
 
+## Session: 2026-11-11 (newest) — CP-45 (access re-checks, explicit hook, finalize lock)
+
+- **Agent/tool**: Claude Code, Sonnet 5 only (user's standing direction from earlier this session —
+  no Opus, including for review; a careful self-review of the diff substitutes for a second model).
+- **Objective**: Implement CP-45, per the user's direct request, continuing from CP-43 earlier in
+  this same conversation (CP-44 skipped, per the earlier budget-sequencing discussion to defer it).
+- **Repositories involved**: both. `blend_ode_be` (`sow_module/collab`) for the bulk of the
+  checkpoint; `blend_ode` for a small, clearly-scoped frontend addition (task 4's "clear message").
+
+### Starting state
+| Repo | Branch | Starting commit |
+|---|---|---|
+| blend_ode | dinesh_thamill_blend360india_sow_editor | `e9ff19b`'s parent, `fb1d77a` |
+| blend_ode_be | dinesh_thamill_blend360india_sow_editor | `7beb610` |
+
+### Files inspected
+`owner/connection.ts` (full re-read), `shared/bridge.ts` (`AccessChangedRequest`/`Response`,
+`SERVICE_KEY_HEADER`), `data/store.ts`/`memory-store.ts`/`snowflake-store.ts` (confirmed
+`addRevocation`/`listRevocations` already existed but had no caller), `blend_ode_be/src/sow_module
+/collab_internal.py` (confirmed FastAPI's `notify_access_changed` already calls the Node endpoint
+this checkpoint had to build), `ticket.ts` (the constant-time-compare pattern reused for the service
+key), `owner/checkpoint-coordinator.ts` (found the `CheckpointReason`/`'shutdown'` type gap).
+
+### Files created / modified
+| Repo | Path | Change |
+|---|---|---|
+| blend_ode_be | `sow_module/collab/src/owner/access-recheck-registry.ts` | new — `AccessRecheckRegistry` |
+| blend_ode_be | `sow_module/collab/src/owner/connection.ts` | `performAccessRecheck`, periodic timer |
+| blend_ode_be | `sow_module/collab/src/server.ts` | `/internal/access-changed`, revocation-poll backstop |
+| blend_ode_be | `sow_module/collab/src/owner/checkpoint-coordinator.ts` | `CheckpointReason` fix (drive-by) |
+| blend_ode_be | `sow_module/collab/src/config.ts`, `.env.example` | 2 new env vars |
+| blend_ode | `src/sow_module/editor/LexicalDraftEditor.tsx` | `describeSessionCloseCode` |
+| both | new/updated test files | 12 new backend tests, 3 new frontend tests |
+
+### Implementation summary
+See `prompt_log.md`'s CP-45 entry for full detail. Notable judgment call: a full-mount frontend test
+(real editor, fake WebSocket opened then closed with 4403/4410) was attempted first to verify the new
+UI message end to end, but `@lexical/react`'s `CollaborationPlugin` calls `provider.connect()` on its
+own internal async timing, which could not be pinned down reliably in jsdom within reasonable time —
+rather than keep burning budget on a flaky test, the close-code-to-message mapping was extracted into
+a pure, directly-testable function (`describeSessionCloseCode`), verified by a deterministic unit test
+plus reading the (small, obviously-correct) wiring in the diff.
+
+### Commands executed
+```
+npx tsc --noEmit                                  # clean, both repos
+npm run --silent lint                             # clean (collab)
+npx eslint src/sow_module/editor --ext .ts,.tsx    # clean (frontend; 1 pre-existing unrelated warning)
+bash scripts/check-module-boundary.sh             # module boundary OK
+npx vitest run                                    # 105 passed, 7 skipped (was 93/7 before this checkpoint)
+CI=true npm test -- --testPathPattern=sow_module   # 189 passed, 2 failed (pre-existing CRLF drift)
+CI=false npm run build                             # succeeds
+PYTHON=./venv/Scripts/python.exe bash sow_module/run_checks.sh   # only the known pre-existing CRLF FAILs
+```
+
+### Tests performed and actual results
+- Collab Vitest: **105 passed, 7 skipped** (12 new: 5 `AccessRecheckRegistry` unit tests, 7
+  server-level integration tests — the timer closing a socket on lost access, a live role change
+  without closing, a transient-failure-is-ignored case, the explicit hook closing a socket in well
+  under 1 second, the hook rejecting a missing/wrong service key, the finalize lock via the hook, and
+  the revocation-poll backstop picking up a row written directly to the store).
+- Frontend `sow_module` Jest: **189 passed, 2 failed** — the same pre-existing CRLF/hash-drift
+  failures noted every session this week (3 new deterministic tests for `describeSessionCloseCode`).
+- Backend `sow_module` pytest subset: 115 passed, 1 failed — same pre-existing family; no Python file
+  touched this checkpoint.
+- `npx tsc --noEmit`: clean in both repos. Production build: succeeds.
+
+### Commits
+| Repo | Commit hash | Message |
+|---|---|---|
+| blend_ode | `e9ff19b` | feat(sow_module): CP-45 clear message when access is removed or finalized |
+| blend_ode_be | `98438f2` | feat(sow_module): CP-45 access re-checks, explicit hook, finalize lock |
+
+### Push status
+**Not pushed** — awaiting explicit authorization, per standing instruction.
+
+### Unresolved issues
+- Same carried-over items as prior sessions: the three CP-42-review-deferred gaps
+  (`KNOWN_ISSUES_AND_BLOCKERS.md` #14-16), the `core.autocrlf` hash-drift issue, and CP-39's
+  still-unrun two-user manual test. Nothing new this checkpoint.
+
+### Recommended next actions
+1. The user has not yet chosen the next checkpoint. CP-44 and CP-46/47 remain recommended to defer
+   (per the earlier budget-sequencing discussion); CP-48 or CP-51 are the next reasonable picks if
+   continuing the build plan sequentially.
+2. Everything continues on Sonnet 5.5 only per the user's standing direction.
+
+---
+
 ## Session: 2026-11-11 (even latest) — CP-43 (snapshot scheduling and compaction), Sonnet only
 
 - **Agent/tool**: Claude Code, Sonnet 5 — user explicitly set the model and asked to stop using Opus

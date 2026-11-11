@@ -197,3 +197,18 @@ with the user.
 
 The user set Sonnet 5.5 as the only model going forward (no Opus, for cost reasons) — this
 checkpoint and its own review were done entirely on Sonnet.
+
+---
+
+## 2026-11-11 (newest) — CP-45 completed
+
+### blend_ode_be (backend, the collab Node service)
+- `feat(sow_module)` periodic per-connection access re-check, the `POST /internal/access-changed`
+  hook (FastAPI's `notify_access_changed` already called it; nothing existed on the Node side to
+  receive it), and a revocation-poll backstop. Drive-by fix: `CheckpointReason` was missing
+  `'shutdown'`, which the wire contract already had — CP-42's shutdown checkpoint had been labeled
+  `'explicit'` instead. (`98438f2`)
+
+### blend_ode (frontend)
+- `feat(sow_module)` `describeSessionCloseCode`: a clear message when a live session closes because
+  access was removed or the SOW was finalized, instead of a bare "Offline" status. (`e9ff19b`)

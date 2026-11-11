@@ -150,3 +150,13 @@ to the SOW module work but are relevant to anyone continuing development here.
 - **Model note:** the user set Sonnet 5.5 as the only model for this and future sessions, explicitly
   ruling out Opus for cost reasons (including for review passes — a careful self-review substitutes).
 - **Next:** not yet chosen by the user.
+
+## Update 2026-11-11 (CP-45)
+- **CP-45 is now complete.** Access and status changes now take effect on an already-live WebSocket:
+  a periodic per-connection re-check (default 60s), an explicit `/internal/access-changed` hook that
+  FastAPI's existing `notify_access_changed` now actually reaches, and a 5-second revocation-poll
+  backstop. The finalize lock (close 4410 when a SOW becomes Finalized mid-session) and a demoted
+  user's edits being rejected both reuse existing logic rather than adding new paths. Frontend shows
+  a clear message when a session closes this way, instead of a bare "Offline" status.
+  `blend_ode_be` commit `98438f2`, `blend_ode` commit `e9ff19b`. Not pushed yet.
+- **Next:** not yet chosen by the user. CP-44 and CP-46/47 remain recommended to defer.

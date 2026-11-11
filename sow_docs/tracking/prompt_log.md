@@ -777,3 +777,68 @@ Verified (this session):
 Open questions for the user: none new.
 Handoff to next prompt: per the user's own direction, continuing on Sonnet 5.5 only (no Opus) for
 cost reasons. Next checkpoint not yet chosen by the user as of this entry.
+
+## CP-45: access re-checks, explicit hook, finalize lock — completed (2026-11-11)
+Summary: Permission and status changes now take effect on an already-live WebSocket, not just at
+connect time. CP-20 had already built `DataStore.addRevocation`/`listRevocations` and the wire
+contract `AccessChangedRequest`/`AccessChangedResponse` (`shared/bridge.ts`), and FastAPI's
+`notify_access_changed` (`collab_internal.py`) already POSTs to `/internal/access-changed` — none of
+that existed on the Node side to receive it until this checkpoint. Built: (1) a periodic per-connection
+re-check (`accessRecheckIntervalMs`, default 60s) that re-resolves access through FastAPI and acts on
+the result exactly like the existing first-connect check (close 4403 if lost, close 4410 if the SOW
+is now Finalized, `ROLE_CHANGED` if the role changed); (2) the explicit `POST /internal/access-changed`
+hook itself, service-key protected (constant-time compare, same pattern as `ticket.ts`), which records
+a revocation row and immediately re-checks the affected connection(s) within the same request; (3) a
+5-second polling backstop reading `SOW_COLLAB_REVOCATION` for anything a process wasn't directly
+notified of. A demoted user's further edits are rejected by the existing CP-24 `canEdit()` gate —
+verified with a dedicated test, not new code.
+Decisions/assumptions: factored a single `performAccessRecheck()` used by REAUTH, the periodic timer,
+and the explicit hook, so "what resolve-access says happens" has exactly one implementation instead of
+three copies that could drift. A transient `resolveAccess` failure during a re-check is logged and the
+session is left as-is (not closed) — closing on every momentary FastAPI hiccup would be worse than the
+problem it's checking for; the next scheduled attempt tries again. `AccessRecheckRegistry` is
+deliberately a separate structure from `ConnectionRegistry` (which stays purely a ws-for-broadcast
+list, per its own existing single-responsibility comment) since it needs to carry actor identity to
+support the explicit hook's optional `actorId` (revoke one guest vs. the whole deal). The revocation
+poll is liberal by design (re-checks every revocation in the window regardless of whether this process
+actually has that document open — `AccessRecheckRegistry.trigger` is a no-op for a dealId it doesn't
+know about, so this costs nothing extra to call). Drive-by fix, found while touching
+`checkpoint-coordinator.ts`: its local `CheckpointReason` type was `'timer' | 'explicit' |
+'last_client_left'`, missing `'shutdown'` even though the wire contract (`CheckpointRequest.reason`,
+set at CP-05) already had it — CP-42's `drain()` had been passing `'explicit'` for the shutdown
+checkpoint instead of the correct reason. Now the local type reuses `CheckpointRequest['reason']`
+directly so the two can't drift again.
+Frontend: `SowCollabProvider` already emitted a bare `close` event with the raw code; nothing used it
+to tell the user anything. Added `describeSessionCloseCode()` (a pure function, exported for testing)
+mapping `ACCESS_REMOVED`/`LOCKED` to a clear message shown via the existing `liveError` Alert. A
+full-mount test (render the real editor, fake-WebSocket it open, then close with 4403/4410) was
+attempted first but proved flaky — `@lexical/react`'s `CollaborationPlugin` calls `provider.connect()`
+on its own internal timing, which this session could not pin down reliably in jsdom — so the mapping
+was extracted into a pure function and unit-tested directly instead, with identical correctness
+coverage and zero flakiness. The wiring itself (`provider.on('close', ...)` calling the function) was
+verified by reading the diff and by the frontend typecheck, not by a flaky integration test.
+Registry (new or changed):
+- file: sow_module/collab/src/owner/access-recheck-registry.ts: `AccessRecheckRegistry`
+- file: sow_module/collab/src/owner/connection.ts: `performAccessRecheck`, `applyRoleChange`; periodic
+  recheck timer per connection; `accessRecheck`/`accessRecheckIntervalMs` added to `ConnectionDeps`
+- file: sow_module/collab/src/server.ts: `POST /internal/access-changed` (service-key protected);
+  the revocation-poll backstop interval; `hasValidServiceKey`
+- file: sow_module/collab/src/owner/checkpoint-coordinator.ts: `CheckpointReason` now reuses
+  `CheckpointRequest['reason']`; `server.ts`'s `drain()` now passes `'shutdown'`, not `'explicit'`
+- config: `COLLAB_ACCESS_RECHECK_INTERVAL_MS` (60000), `COLLAB_REVOCATION_POLL_INTERVAL_MS` (5000)
+- file: blend_ode/src/sow_module/editor/LexicalDraftEditor.tsx: `describeSessionCloseCode`
+Verified (this session):
+- `npx tsc --noEmit`: clean in both repos. `npm run --silent lint` / `check-module-boundary.sh`: clean.
+- Collab Vitest: **105 passed, 7 skipped** (was 93/7 before this checkpoint; +12 new: 5
+  `AccessRecheckRegistry` unit tests, 7 server-level integration tests covering the timer, the
+  explicit hook's sub-1-second close, the service-key rejection, the finalize lock, the revocation
+  backstop, and a transient-failure-does-not-close case).
+- Frontend `sow_module` Jest: 189 passed, 2 failed — the same pre-existing CRLF/hash-drift failures
+  as every session this week (3 new, deterministic tests for `describeSessionCloseCode`).
+- Backend `sow_module` pytest subset: 115 passed, 1 failed — same pre-existing CRLF/hash-drift family.
+- Production build (`CI=false npm run build`): succeeds.
+Open questions for the user: none new.
+Handoff to next prompt: next checkpoint not yet chosen. Per the earlier budget-sequencing discussion,
+CP-44 (multi-instance socket routing) and CP-46/47 (scale harness/measurements) remain recommended to
+defer; CP-48 (intake pipeline consolidation) or CP-51 (legacy drafts open safely) are the next
+reasonable picks if continuing the build plan.
