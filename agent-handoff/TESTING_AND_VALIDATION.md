@@ -55,8 +55,7 @@ result below is marked with when it was last actually run.
   ```
   Interactive watch mode by default (CRA's standard behavior); pass `CI=true` to run once and exit,
   which is what `blend_ode_be/sow_module/run_checks.sh` does for the `sow_module`-scoped subset.
-  **Last actually run** (SOW module subset only, via `run_checks.sh`, 2026-11-06): 5 test suites,
-  **68 passed**. The full, unscoped `npm test` for the entire frontend app was **not run** in this
+  **Last actually run** (SOW module subset, 2026-11-11): **175 passed**. The full, unscoped `npm test` for the entire frontend app was **not run** in this
   session — do not assume it currently passes; run it before relying on that claim.
 
 ## SOW collaboration module's Node service (`blend_ode_be/sow_module/collab`)
@@ -69,7 +68,7 @@ result below is marked with when it was last actually run.
   npm run lint        # eslint src
   npm test            # vitest run
   ```
-  Last actually run (2026-11-06): typecheck clean, lint clean, **11 passed, 6 skipped** (the 6
+  Last actually run (2026-11-11): typecheck clean, lint clean, **76 passed, 6 skipped** (the 6
   skipped are the live-Snowflake integration tests, gated behind `RUN_SNOWFLAKE_INTEGRATION=1`).
 - **Live-Snowflake integration run** (opt-in, writes temporary tables to real Snowflake and drops
   them — requires real credentials and should not be run casually):
@@ -88,7 +87,7 @@ bash blend_ode_be/sow_module/run_checks.sh
 Runs, in order: shared-code sync check (fails if the vendored copy in `blend_ode_be` has drifted
 from `blend_ode`'s source of truth), frontend Jest (SOW module scope only), frontend shared
 typecheck, collab-service typecheck/lint/Vitest, backend module pytest subset. **Last actually run**
-(2026-11-06): **7/7 PASS**. This is the fastest single command to confirm the SOW module hasn't
+(2026-11-11): **8/8 PASS**. This is the fastest single command to confirm the SOW module hasn't
 regressed; it does not cover the rest of the app (Pricing Tool, the older SOW Studio flows, the full
 frontend test suite).
 
@@ -97,7 +96,7 @@ frontend test suite).
 ```bash
 cd blend_ode && npm run build
 ```
-**Not run** in any session recorded here — confirm it succeeds before relying on that claim.
+**Last actually run 2026-11-11**: passes. No `sow_module` lint warnings in the output.
 
 ## API testing
 

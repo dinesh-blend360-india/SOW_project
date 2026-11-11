@@ -42,16 +42,15 @@ flowchart LR
     subgraph Collab["sow_module Node service (in progress, not yet deployed)"]
         OWNER["Document Owner\nExpress + ws + Yjs"]
     end
-    FE -. "planned: WebSocket\n(ticket-authenticated)" .-> OWNER
+    FE -- "WebSocket\n(ticket-authenticated, behind flag)" --> OWNER
     OWNER -- "SnowflakeDataStore\n(bind vars only)" --> SF2
-    OWNER -. "service-key HTTP calls\n(built, not yet invoked end-to-end)" .-> SM
+    OWNER -- "service-key HTTP calls\n(checkpoint, document-state)" --> SM
 ```
 
-**Verified vs. planned in this diagram**: everything in the `Backend` subgraph and its database/
-integration edges is built and live. The `Collab` subgraph (the Node "Document Owner" service) has
-its data layer (`SnowflakeDataStore`) and the FastAPI-side endpoints it will call both built and
-tested, but the Express/`ws` server itself, the browser WebSocket client, and the live wiring
-between them do not exist yet — see `CURRENT_PROJECT_STATE.md`.
+**Verified in this diagram**: the `Backend` subgraph and its database and integration edges are built and
+live. The `Collab` subgraph (the Node Document Owner) has its data layer, the FastAPI endpoints it calls,
+the WebSocket server, the checkpoint path and the browser client built and tested. It is not deployed,
+and the browser reaches it only with the feature flag on.
 
 ## Component responsibilities
 
@@ -120,11 +119,11 @@ flowchart LR
     SaveDraft -- "assert_deal_access\n+ row lock + revision check" --> SOWS[(SOWS / SOW_DRAFT_VERSIONS)]
 ```
 
-## Data flow: SOW checkpoint (planned, Lexical/Yjs path — endpoints built, wiring pending)
+## Data flow: SOW checkpoint (implemented, Lexical/Yjs path, behind the feature flag)
 
 ```mermaid
 flowchart LR
-    Lexical["Lexical editor (planned UI)"] -- "Yjs updates over WebSocket" --> Owner["Node Document Owner"]
+    Lexical["Lexical editor (behind flag)"] -- "Yjs updates over WebSocket" --> Owner["Node Document Owner"]
     Owner -- "batched durable writes\n(bind vars, fencing token)" --> SOWCOLLAB[(SOW_COLLAB_* in NEXDRAFT)]
     Owner -- "POST /internal/sow-collab/checkpoint\n(service key)" --> Internal["collab_internal.checkpoint()"]
     Internal -- "sanitize_draft_html()\nthen reuse" --> SaveDraft["save_sow_draft()"]
@@ -162,7 +161,7 @@ repo's manifest for that)
 - **`snowflake-sdk` (Node, `sow_module/collab/`)**: the collaboration module's own, independent
   Snowflake connection (key-pair auth, pooled via `generic-pool`) into the `NEXDRAFT` schema —
   entirely separate from the Python backend's Snowflake connection and credentials.
-- **Lexical + Yjs** (frontend, installed but not yet wired into any route): the planned editor
+- **Lexical + Yjs** (frontend, used by the SOW screen only behind the feature flag): the editor
   framework and CRDT library for the live-collaboration module.
 - **antd** (frontend): the UI component library for essentially the whole app; bootstrap CSS is
   also loaded globally alongside it (verified, not clearly intentional — see `KNOWN_ISSUES_AND_BLOCKERS.md`).

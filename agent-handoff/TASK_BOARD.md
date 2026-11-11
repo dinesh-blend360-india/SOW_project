@@ -146,3 +146,16 @@ BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
 - **NEW — BACKEND-500-SYNC:** `/pricing_tool/hubspot_deals_sync_info` returns 500. Needs the backend traceback before a fix. Status: BLOCKED on logs.
 - **DONE — PRICING-START-DATE-CRASH:** fixed in 8853099.
 - **Next:** SOW-CP26 (toolbar).
+
+## Update 2026-11-11
+- **SOW-CP26 to SOW-CP39: COMPLETED** (see CHANGELOG 2026-11-09 to 2026-11-11). CP-39 freeze and
+  regression report written. The two-user manual run is **NOT done**.
+- **SOW-CP40 (presence, cursors, chunked sync): IN_PROGRESS.** Done: shared chunk framing; Owner and
+  browser send and receive chunks; 100-connection room cap; 5 MB sync tested at server level.
+  Remaining: awareness throttle, presence UI (avatars with overflow), two-client cursor test,
+  browser-level 5 MB test.
+- **NEW — OUTSIDE-CHANGE-RELOAD:** when the draft changes outside the editor, the Owner refuses to save
+  and shows a notice, but does not reload the room. Needs a design (room reset) before implementing.
+  Status: BLOCKED on a design decision.
+- **NEW — PUSH:** all three repos have local commits not pushed. Status: BLOCKED on user authorization.
+- **Next:** finish CP-40, then CP-41 (per the build plan).

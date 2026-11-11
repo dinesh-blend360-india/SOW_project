@@ -124,16 +124,16 @@ in the tracked `.env.development` — not independently confirmed by running it 
 Set `REACT_APP_API_URL` (in `.env.development`, already present) to point at your local backend if
 it isn't already `http://127.0.0.1:8000` or equivalent.
 
-## SOW collaboration module's Node service startup (not yet integrated into the main app)
+## SOW collaboration module's Node service startup (not started by the main app's dev script)
 
 ```bash
 cd blend_ode_be/sow_module/collab
 npm run dev
 ```
-This starts the service in isolation — it is not yet reachable from the frontend (no browser-side
-WebSocket client exists yet; see `CURRENT_PROJECT_STATE.md`). Useful today only for running its own
-test suite or any of its diagnostic "spike" scripts (`npm run spike:*`, see that folder's own
-`package.json`).
+This starts the service in isolation. The browser editor reaches it through the session endpoint, which
+returns `COLLAB_WS_PUBLIC_URL`; both must be configured for a real session. The Lexical editor is shown
+only with the feature flag (see `ENVIRONMENT_AND_SECRETS.md`). The service is also useful for its own
+test suite and its spike scripts (`npm run spike:*`).
 
 ## Build and verification commands
 

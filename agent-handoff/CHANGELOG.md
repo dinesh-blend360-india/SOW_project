@@ -108,3 +108,32 @@ own `git log` for that history; it is not transcribed here.
 
 ### Root
 - `docs(sow_module)` CP-25 record (407467b)
+
+## 2026-11-09 to 2026-11-11 — SOW editor CP-26 to CP-40 (partial), fixes
+
+### blend_ode (frontend)
+- `feat(sow_module)` CP-26 toolbar: inline formats, headings, alignment, undo and redo (`cedf2a1`)
+- `feat(sow_module)` CP-27 highlight, font size, font family; span styles kept on import (`c1513aa`)
+- `feat(sow_module)` CP-28 three-level lists with depth cap (`70d5fdb`)
+- `feat(sow_module)` CP-29/30 tables: insert, rows, columns, header, widths, merge, shading (`4db5c7a`)
+- `feat(sow_module)` CP-31 to 33 paste intake, placeholders, find and replace, stable block IDs (`8d389ec`)
+- `feat(sow_module)` CP-34 to 36 page chrome, action bar, editor API, add-in adapter (`8283773`)
+- `feat(sow_module)` CP-38 flagged screen integration (`0b02b88`)
+- `fix(sow_module)` print: toolbar hidden, `@page` A4 at top level (`5d0b024`, `c64f5e7`)
+- `feat(sow_module)` editor shown as an A4 page with 20 mm margins (`7d8c2b8`)
+- `feat(sow_module)` CP-40 (partial) shared chunk framing (`f9441ad`)
+- `feat(sow_module)` CP-40 (partial) browser provider sends and receives chunks (`0a0d6d7`)
+- Dependencies: none added in this period.
+
+### blend_ode_be (backend, incl. the collab Node service)
+- `feat(sow_module)` CP-37 Owner checkpoint to the draft system; fixed the CP-24 validation boundary for
+  the real Lexical Yjs shape; added `@lexical/yjs`, `@lexical/rich-text` (0.44.0) and `happy-dom`
+  (20.14.6) to the collab service (`62e248c`)
+- `feat(sow_module)` CP-38 Owner refuses to overwrite changes made elsewhere (`8744189`)
+- `feat(sow_module)` CP-40 (partial) Owner chunked sync; 100-connection room cap (`6e643e4`)
+- `chore(sow_module)` shared re-sync (`847555f`; earlier `ad942b2`, `1b2d13d`, `e29ecf7`)
+- `fix(sow_module)` table cell style groups in `html_allowlist.py` (`bce5042`)
+
+### Root
+- `docs(sow_module)` CP-26 to CP-39 logs; `core_api_freeze.md`; `phaseD_report.md` (`ed04323` to `f114978`)
+- `chore` ignore the local to-do file (`6ea7448`)

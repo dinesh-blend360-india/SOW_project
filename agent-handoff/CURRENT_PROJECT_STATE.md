@@ -9,8 +9,9 @@ as development progresses — it should always reflect reality, not a plan.
   production use. Not modified by the work described below; this handoff system documents it but
   did not change its behavior.
 - **SOW collaboration module** (Lexical + Yjs live-editing, replacing CKEditor for SOW authoring):
-  **in active development**, checkpoints CP-00 through CP-20 of its own build plan
-  (`sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md`) are complete.
+  **in active development**, checkpoints CP-00 through CP-39 of its own build plan
+  (`sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md`) are complete; CP-40 is partly done.
+  The sections below are a snapshot from 2026-11-06 and are superseded by the 2026-11-11 update at the end.
 
 ## Completed functionality (SOW collaboration module)
 
@@ -87,3 +88,16 @@ to the SOW module work but are relevant to anyone continuing development here.
 - **A local sandbox page exists** (`/sow-sandbox`, temporary, uncommitted) with formatting, lists, and A4 print.
 - **Open:** backend 500 on `/pricing_tool/hubspot_deals_sync_info`; the CORS message is a side effect of that 500.
 - **Next:** CP-26 (toolbar in the live editor).
+
+## Update 2026-11-11
+- **CP-26 to CP-39 complete.** Editor: toolbar, formatting, lists, tables, paste intake, placeholders,
+  find and replace, stable block IDs, A4 page, action bar, editor API, add-in adapter, print.
+- **Owner checkpoint works** (behind the feature flag): explicit Save and quiet-period saves go to the
+  existing FastAPI checkpoint endpoint. Outside changes to the draft are refused and reported to clients.
+- **Browser editor is reachable only with the feature flag** (`FE_SOW_LEXICAL_EDITOR`, or `FE_ADMIN` with
+  `REACT_APP_SOW_LEXICAL_EDITOR=true`). With the flag off, the screen is unchanged.
+- **CP-40 partly done:** chunked sync (both sides) and a 100-connection room cap are built and tested
+  at unit and server level. Awareness throttle, presence UI and the two-client cursor test are not built.
+- **Not verified in a running system:** the two-user manual test (CP-39 script), real two-browser cursors,
+  and anything needing the backend and collab service running together.
+- **Not pushed:** local commits in all three repos. See TASK_BOARD `PUSH`.

@@ -85,12 +85,14 @@ changing any of them.
 | ADR-004 (D-B1) | Relationship to the native-editor pilot's guest/mention/audit tables — reuse via FastAPI only | Proposed, **not yet implemented** (guest sessions deferred to CP-60) |
 | ADR-005 (D-B2) | Node + Express + `ws` + Yjs as a separate deployable (a Python-only relay was rejected — no Lexical validation in Python) | Proposed, implemented |
 | ADR-006 | Memory-first, batched durable log to `SOW_COLLAB_UPDATE` | Proposed, implemented |
-| ADR-007 | Single-writer lease with a fencing token, taken via `MERGE` (Snowflake has no enforced uniqueness) | Proposed, implemented at the table/data-layer level; not yet wired into the live WebSocket path |
+| ADR-007 | Single-writer lease with a fencing token, taken via `MERGE` (Snowflake has no enforced uniqueness) | Proposed, implemented at the data layer. The Owner passes the lease's fencing token on checkpoint; FastAPI does not yet verify it (KNOWN_ISSUES #7) |
 | ADR-008 (D-B4) | `blend_ode/src/sow_module/shared/` is the source of truth for shared TypeScript; vendored into the backend with a SHA-256 drift check | Proposed, implemented |
 | ADR-009 (D-B3) | The module owns its own HTML allowlist (`html_allowlist.py` / `html-contract.json`); never uses the existing `sanitize_rich_text` | Proposed, implemented |
 | ADR-010 | Tracking files and the Node service live in the backend repo | Proposed, implemented (tracking docs later relocated to `sow_docs/`, see note below) |
 | ADR-011 | Permission changes: 60-second re-check poll plus an immediate `access-changed` hook | Proposed, partially implemented (the hook exists for guest revoke; the 60-second poll is not yet built) |
 | ADR-012 | All `SOW_COLLAB_*` tables live in `BLEND_INTERNAL_IT_APPS.NEXDRAFT`, fully qualified | Proposed, implemented; grant confirmed live 2026-11-06 |
+| ADR-013 | Block IDs and add-in markers are written into exported HTML (`data-block-id`, `data-add-in-id`) so reopening a checkpoint keeps them | Proposed 2026-11-09 by Claude; **user to confirm** |
+| ADR-014 | The Owner never overwrites a draft whose revision moved outside the editor; it refuses the checkpoint and tells clients | Proposed 2026-11-10 by Claude; **user to confirm**; reload of the room still open (TASK_BOARD) |
 | (unnumbered) | Standard Snowflake tables, not hybrid tables, for `SOW_COLLAB_*` | **User decision, 2026-11-06** — made with partial information (the hybrid-table grant was denied; CP-09's latency gate was never run). See `sow_docs/tracking/phaseB_report.md` and `migrations/011_sow_collab_live_workspace.sql`'s header comment. |
 
 **Open question still awaiting the user**: decisions.md's Q2 — who exactly counts as `sow_admin`

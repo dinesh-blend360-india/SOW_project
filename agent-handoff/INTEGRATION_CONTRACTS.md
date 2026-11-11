@@ -113,12 +113,18 @@ after a `stale_revision`.
 raises — a failed notification never blocks the FastAPI action that triggered it (e.g. revoking a
 guest invitation still succeeds even if the Node service is unreachable).
 
-### WebSocket (planned — endpoint exists only as a protocol spec today, `protocol.ts`; no server
-or client implementation yet)
+### WebSocket (implemented; behind the feature flag)
 
-`wss://<owner>/ws/sow/{sow_id}` — ticket sent in the first `HELLO` message, not the URL. Full
-lifecycle (HELLO timeout, resolve-access re-checks every 60s, lease ownership, awareness frames,
-close codes 4401/4403/4410/4301) is specified in `sow_docs/tracking/contracts.md` section 5.
+- Endpoint on the Owner: `wss://<owner>/collab` (the path is exact; requests to any other path are dropped).
+  The ticket is sent in the first `HELLO` message, never in the URL. Protocol version `1`.
+- Client to server: `HELLO {type, protocol, ticket}`, `REAUTH {type, ticket}`, `CHECKPOINT_NOW {type}`.
+  Binary frames: `[kind][payload]`, kind `0` = SYNC (Yjs update), `1` = AWARENESS, `2` = CHUNK (one
+  piece of a larger SYNC payload; 256 KB pieces, in order).
+- Server to client: `READY`, `DURABLE`, `ROLE_CHANGED`, `REAUTH_REQUIRED`, `CHECKPOINTED {version, revision, upToSeq?}`,
+  `ERROR {code, message, fatal}`.
+- Close codes: `4401` bad ticket, `4403` access removed, `4410` locked, `4301` owner hint, `1013` room full
+  (more than 100 connections).
+- Full message list and the frozen surface: `sow_docs/tracking/core_api_freeze.md`.
 
 ## Shared data models
 

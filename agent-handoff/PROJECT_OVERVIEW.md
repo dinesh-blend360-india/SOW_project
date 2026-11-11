@@ -90,7 +90,7 @@ for exactly what is and isn't done.
 
 ## Current development phase
 
-As of 2026-11-06: the Lexical/Yjs editor module has completed CP-00 through CP-20 of its build
-plan (data layer, FastAPI session/internal endpoints) — the Node Express service itself (CP-21+)
-and the actual browser-side Lexical editor are not yet built. See `CURRENT_PROJECT_STATE.md` for
-the authoritative, continuously-updated status.
+As of 2026-11-11: the Lexical/Yjs editor module has completed CP-00 through CP-39 of its build plan,
+including the Owner checkpoint and the flagged screen integration. CP-40 (presence and chunked sync) is
+partly done. The module is not deployed, and the two-user manual test has not been run. See
+`CURRENT_PROJECT_STATE.md` for the authoritative, continuously-updated status.

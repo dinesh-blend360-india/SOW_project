@@ -47,3 +47,10 @@ Close codes: `4401` bad ticket, `4403` access removed (do not reconnect), `4410`
 - `COLLAB_CHECKPOINT_QUIET_MS` (default `30000`): quiet period before an automatic checkpoint.
 - `COLLAB_FASTAPI_TIMEOUT_MS` (default `5000`).
 - Build flag `REACT_APP_SOW_LEXICAL_EDITOR=true` (admins only, with `FE_ADMIN`).
+
+## Change log
+
+- **2026-11-11 (CP-40, non-breaking addition):** binary frame kind `2` = CHUNK added to `FRAME_KIND`
+  (one 256 KB piece of a larger SYNC payload, in order, max 16 MB assembled). Close code `1013`
+  (room full, more than 100 connections) added. Config `COLLAB_CHECKPOINT_QUIET_MS` (default 30000)
+  documented. Existing frame kinds and close codes are unchanged.

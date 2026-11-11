@@ -137,13 +137,12 @@ deliberately.
   confirmed to currently cause a visible bug.
 - **Possible resolution**: none proposed; flagged for awareness only.
 
-## 12. The SOW collaboration module's browser-side editor and WebSocket client don't exist yet
+## 12. The SOW collaboration editor is behind a feature flag and not yet verified end to end
 
-- **Repository**: `blend_ode`
-- **Impact**: This is expected, in-progress work, not a bug — listed here (and in
-  `CURRENT_PROJECT_STATE.md`/`TASK_BOARD.md`) so it isn't mistaken for a regression. Lexical and
-  Yjs packages are installed; the shared TypeScript contracts exist; no component wires them into
-  any route yet, and no `WebSocket`/`y-websocket` client code exists in the frontend at all.
+- **Repository**: `blend_ode` and `blend_ode_be`
+- **Impact**: Medium. The Lexical editor, its WebSocket client and the Owner checkpoint all exist and
+  pass unit and server tests. Nothing has been run with two real users. The two-user test in
+  `sow_docs/tracking/phaseD_report.md` is still to do.
 
 ## Update 2026-11-09
 - **RESOLVED:** pricing pages crash with "Cannot read properties of null (reading 'replace')" when a deal has no project start date (8853099).
@@ -151,3 +150,15 @@ deliberately.
 - **OPEN:** `/pricing_tool/hubspot_deals_sync_info` returns 500. The browser reports it as CORS because error responses lose the CORS headers. Cause unknown until the backend traceback is captured.
 - **OPEN:** live editor returns 403 for users without `FE_SOW_LEXICAL_EDITOR`/`FE_ADMIN` or deal access. This is an access rule, not a bug.
 - **OPEN:** `blend_ode/src/App.tsx` was truncated once outside this session. Recovered from git. Check that no one else edits it.
+
+## Update 2026-11-11
+- **OPEN:** a change to the draft made outside the editor is refused by the Owner and shown as a notice;
+  the room is not reloaded. Users must reload the page. Needs a design before the Owner can reset a room.
+- **OPEN:** awareness has no throttle yet, and presence and cursors are not verified with two browsers.
+- **OPEN:** the server does not enforce the 3-level list depth cap; only the editor and the TypeScript
+  allowlist do (`html_allowlist.py` is a streaming sanitizer and needs a tree-based rule).
+- **OPEN:** merged-cell tables do not export correctly to docx or pdf (the exporters flatten tables).
+- **OPEN:** `blend_ode_be/.env.example` has no `COLLAB_*` variables. The Node service's own
+  `sow_module/collab/.env.example` is missing `COLLAB_CHECKPOINT_QUIET_MS` (default 30000 in code).
+- **RESOLVED for print:** verified with a generated PDF (one A4 page). Earlier print output was Letter size
+  and included the toolbar.

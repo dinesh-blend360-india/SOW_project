@@ -75,6 +75,8 @@ are **not yet added** to it (a gap from CP-19 of the SOW editor module's build �
 | `COLLAB_SERVICE_KEY_API_TO_NODE` | Header value FastAPI sends when calling the Node service's `/internal/access-changed` | none |
 | `COLLAB_NODE_BASE_URL` | Private URL of the Node collaboration service | none |
 | `COLLAB_WS_PUBLIC_URL` | Public WebSocket URL returned to the browser by the session endpoint | none — feature stays disabled until set |
+| `COLLAB_CHECKPOINT_QUIET_MS` (Node service) | Quiet period before an automatic checkpoint | `30000` |
+| `COLLAB_FASTAPI_TIMEOUT_MS` (Node service) | Timeout for calls from the Owner to FastAPI | `5000` |
 
 ## `blend_ode` environment variables
 
@@ -92,6 +94,7 @@ real `.env.example` with placeholder values as a follow-up (see `TASK_BOARD.md`)
 | `REACT_APP_MAINTENANCE_MODE` | Renders a maintenance page instead of the app when set |
 | `REACT_APP_ENV` | Environment label shown in the app shell |
 | `REACT_APP_SOW_SIGNOFF_DEMO_MODE` | Demo-mode toggle for the sign-off screen |
+| `REACT_APP_SOW_LEXICAL_EDITOR` | Build flag: with `FE_ADMIN`, shows the Lexical SOW editor (users with `FE_SOW_LEXICAL_EDITOR` see it without this flag) | unset (off) |
 | `REACT_APP_CKEDITOR_ENABLE_CLOUD_SERVICES`, `REACT_APP_CKEDITOR_CLOUD_TOKEN_URL`, `REACT_APP_CKEDITOR_LICENSE_KEY` | Present in `.env.development` but **not referenced in any runtime source file found** — `DraftEditor.tsx` hardcodes `licenseKey: 'GPL'`. Likely dead config; confirm with whoever owns CKEditor licensing before relying on or removing these. |
 | `GENERATE_SOURCEMAP` | CRA built-in — disables production sourcemaps |
 | `BROWSER` | CRA built-in — controls whether `npm start` auto-opens a browser |

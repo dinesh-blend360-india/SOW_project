@@ -83,8 +83,8 @@ tables (`SOWS`, `SOW_DRAFT_VERSIONS`, `HUBSPOT_DEALS`, `PRICING_DEALS`, `USERS`,
 
 ## `blend_ode` — frontend (Create React App)
 
-**Purpose**: The browser UI for both the Pricing Tool and SOW Studio, plus the (not yet wired in)
-shared TypeScript contracts for the Lexical/Yjs editor.
+**Purpose**: The browser UI for both the Pricing Tool and SOW Studio, plus the Lexical/Yjs editor (behind a feature flag) and its
+shared TypeScript contracts.
 
 **Remote**: `origin` → `github.com/dinesh-blend360-india/blend_ode`, `upstream` →
 `github.com/BLEND360/blend_ode`. Current dev branch (verified):
