@@ -1,0 +1,13 @@
+Why writing md files costs credits
+
+Each file I write goes into the conversation as output tokens, and that output is then resent with every later message. Long docs (the handoff files, the prompt log) are the most expensive.
+The handoff docs are long, and I've been re-reading them to update them, which adds more.
+Writing the same thing in several places (CHANGELOG, SESSION_LOG, TASK_BOARD, KNOWN_ISSUES) multiplies that cost.
+How much it matters Compared to the long conversation, the md writing is a smaller share. The bigger driver is still how much the conversation has grown.
+
+How to cut it
+
+Update the logs once at the end of a work session, not after every step.
+Write short entries: a few lines each, not full paragraphs.
+Stop writing into all the files each time. Pick one log (the session log) and keep the others for milestones.
+Skip re-reading a file before appending to it, if you already know the content.
