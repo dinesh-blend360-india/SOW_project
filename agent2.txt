@@ -1,0 +1,51 @@
+===========================================================
+SESSION: 2026-11-11 — Handoff seed entry (read NEW_AGENT_INSTRUCTIONS.md first)
+===========================================================
+
+WHAT I DID
+- This is a seed entry, not a real session. It exists so the next agent can see the expected
+  format of this file before writing its own first entry.
+- Before writing your own entry, read NEW_AGENT_INSTRUCTIONS.md at the project root in full.
+
+CHECKPOINTS / TASKS
+- CP-26 through CP-39: done.
+- CP-40 (presence, cursors, chunked sync): partly done. Chunked sync works both directions
+  (browser and server) and is tested. Awareness throttle, presence UI, and the two-client cursor
+  test are NOT done yet.
+
+TESTS I RAN AND THE REAL RESULT
+- See agent-handoff/SESSION_LOG.md, session "2026-11-09 to 2026-11-11" for the real, last-known
+  test results (175 passed frontend, 76 passed / 6 skipped collab, 116 passed backend subset,
+  8/8 PASS on run_checks.sh). Re-run everything yourself before trusting these numbers — they age
+  quickly.
+
+FILES CHANGED (by repo)
+- None in this entry — this is a seed/placeholder only.
+
+DOCS / TRACKERS UPDATED
+- Created: NEW_AGENT_INSTRUCTIONS.md (root), agent2.txt (this file, root).
+
+COMMITS (not pushed unless stated)
+- (none yet for this entry)
+
+PUSH STATUS
+- not pushed, awaiting confirmation
+
+STILL BROKEN / NOT DONE / NEEDS A DECISION
+- CP-40 presence UI, awareness throttle, and the two-client cursor test are not built.
+- The two-user manual test from sow_docs/tracking/phaseD_report.md has never been run.
+- When the draft changes outside the editor, the Owner refuses to save and shows a notice, but
+  does not reload the room automatically — needs a design decision (see TASK_BOARD.md,
+  OUTSIDE-CHANGE-RELOAD).
+- Server-side list-depth cap is missing in html_allowlist.py (editor and TypeScript allowlist
+  enforce it; the Python sanitizer does not).
+- Merged-cell tables do not export correctly to docx/pdf.
+- Table properties, cell properties and drag column-resize are not built (CKEditor parity gaps —
+  see sow_docs/tracking/audit_frontend.md section 5, rows 22-24).
+- Comments are not shown or created in the live editor yet.
+- Open-item highlighting in DraftEditorScreen.tsx finds the editor via a CKEditor-only DOM class
+  and will not work against the Lexical editor — not tested yet.
+
+WHAT TO DO NEXT
+- Read NEW_AGENT_INSTRUCTIONS.md, then agent-handoff/README.md, then the files it points to.
+- Pick up CP-40 where it left off (see TASK_BOARD.md), or continue to CP-41 per the build plan.
