@@ -242,9 +242,13 @@ fail on the old code and pass on the fix. Original description kept below for hi
 - **OPEN:** a change to the draft made outside the editor is refused by the Owner and shown as a notice;
   the room is not reloaded. Users must reload the page. Needs a design before the Owner can reset a room.
 - **OPEN:** awareness has no throttle yet, and presence and cursors are not verified with two browsers.
-- **OPEN:** the server does not enforce the 3-level list depth cap; only the editor and the TypeScript
-  allowlist do (`html_allowlist.py` is a streaming sanitizer and needs a tree-based rule).
-- **OPEN:** merged-cell tables do not export correctly to docx or pdf (the exporters flatten tables).
+- **RESOLVED 2026-11-12:** the server now enforces the 3-level list depth cap (post-pass in
+  `html_allowlist.py`; tests in `tests/test_sow_module_list_depth.py`). Commit `e2e4842`.
+- **RESOLVED 2026-11-12:** merged cells (colspan/rowspan) now export to Word (gridSpan/vMerge) and PDF
+  (SPAN); tests in `tests/test_sow_module_table_spans.py`. Commit `1a588fb`.
+- **OPEN, needs live Snowflake to verify:** KNOWN_ISSUES #14 (per-document lease renewal) and #16
+  (atomic fencing check). Not changed in a desk-only session, by design.
+- **OPEN, needs owner sign-off:** KNOWN_ISSUES #13 (`core.autocrlf` breaks hash-exact tests).
 - **OPEN:** `blend_ode_be/.env.example` has no `COLLAB_*` variables. The Node service's own
   `sow_module/collab/.env.example` is missing `COLLAB_CHECKPOINT_QUIET_MS` (default 30000 in code).
 - **RESOLVED for print:** verified with a generated PDF (one A4 page). Earlier print output was Letter size

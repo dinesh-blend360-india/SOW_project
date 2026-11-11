@@ -221,3 +221,13 @@ checkpoint and its own review were done entirely on Sonnet.
 - `test(sow_module)` CP-48: verified the intake pipeline/parity test were already built (CP-13/14/31/
   36); added the two real gaps — text-format fuzzing and the hostile corpus through `intake()`
   itself, not just `sanitizeHtml`. (`dcd69eb`)
+
+## 2026-11-12 — Fixes from the CP-40 to CP-48 review
+
+### blend_ode_be
+- `fix(sow_module)` overlapping flushes no longer lose or duplicate updates (KNOWN_ISSUES #15) (`d0c45e5`)
+- `feat(sow_module)` server enforces the 3-level list cap, CP-28 gap (`e2e4842`)
+- `fix(sow_module)` merged cells export to Word and PDF, CP-30 gap (`1a588fb`)
+
+### Root
+- `docs` KNOWN_ISSUES #15 marked resolved (`953df76`)
