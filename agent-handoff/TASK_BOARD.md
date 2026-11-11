@@ -172,3 +172,10 @@ BLOCKED because its dependency, CP-21, is itself in progress, not stalled)*
   `.gitattributes` entry or a git config change), not something to silently patch mid-feature-work.
 - **Next, per the user's own budget-optimization decision this session:** CP-41 (reconnect, offline
   editing, saving state), Sonnet 5.5 — see `prompt_log.md`'s CP-40 entry for the reasoning.
+
+## Update 2026-11-11 (CP-41)
+- **SOW-CP41: COMPLETED.** Reconnect with exponential backoff/jitter and a fresh session per attempt;
+  automated test proving an offline edit resends exactly once; "last saved" time in the status bar.
+  `blend_ode` commit: see `SESSION_LOG.md`. No backend/collab change this checkpoint.
+- **Next:** CP-42 (Snowflake-unreachable rule, graceful shutdown) — Sonnet 5.5 to implement, then a
+  short Opus review specifically on the single-writer/drain guarantee before marking it done.

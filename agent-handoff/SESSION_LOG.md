@@ -8,6 +8,76 @@ forward, every meaningful session should add a real-time entry using
 
 ---
 
+## Session: 2026-11-11 (even later) — CP-41 (reconnect, offline editing, saving state)
+
+- **Agent/tool**: Claude Code, Sonnet 5
+- **Objective**: Implement CP-41 per the user's instruction to proceed on Sonnet, continuing directly
+  from the CP-40 completion earlier in this same conversation.
+- **Repositories involved**: blend_ode only. No backend/collab file needed changing — CP-41's work is
+  entirely in the browser provider and the editor shell that hosts it.
+
+### Starting state
+| Repo | Branch | Starting commit |
+|---|---|---|
+| blend_ode | dinesh_thamill_blend360india_sow_editor | `dd18554` (this session's own CP-40 commit) |
+
+### Files inspected
+`SowCollabProvider.ts` (full re-read after CP-40's changes), `protocol.ts` (`CLOSE_CODES`,
+`HelloMessage.lastDurableSeq`), `useCollabSession.ts`, `LexicalDraftEditor.tsx`'s `providerFactory`.
+
+### Files created / modified
+| Repo | Path | Change |
+|---|---|---|
+| blend_ode | `src/sow_module/editor/SowCollabProvider.ts` | reconnect with backoff/jitter/fresh session |
+| blend_ode | `src/sow_module/editor/useCollabSession.ts` | extracted `requestCollabSession` |
+| blend_ode | `src/sow_module/editor/LexicalDraftEditor.tsx` | wires `refreshSession`; last-checkpoint time |
+| blend_ode | `src/sow_module/editor/__tests__/SowCollabProvider.test.ts` | 6 reconnect tests, `serverClose()` helper |
+
+### Implementation summary
+See `prompt_log.md`'s new CP-41 entry for full detail, including the backoff formula, which close
+codes skip reconnect, and why `HelloMessage.lastDurableSeq` was deliberately left unwired (Yjs's own
+idempotency already satisfies the "no loss, no duplicates" requirement without it).
+
+### Commands executed
+```
+npx tsc --noEmit                                          # clean
+npx eslint src/sow_module/editor --ext .ts,.tsx            # clean (1 pre-existing, unrelated warning)
+CI=true npm test -- --testPathPattern=sow_module           # 186 passed, 2 failed (pre-existing)
+CI=false npm run build                                     # succeeds
+```
+(Collab Vitest was not re-run as a full suite change check beyond confirming no collab file changed —
+no collab/backend source was touched this checkpoint.)
+
+### Tests performed and actual results
+- Frontend `sow_module` Jest: **186 passed, 2 failed** — the same pre-existing CRLF/hash-drift
+  failures noted in the previous session's entry (`sharedDrift.test.ts`, `roles.test.ts`); not caused
+  by this session. The previously-flaky `SowLexicalHarness.test.tsx` passed this run.
+- `npx tsc --noEmit`: clean. ESLint: clean (one pre-existing, unrelated warning in an untouched file).
+- Production build: succeeds.
+
+### Commits
+| Repo | Commit hash | Message |
+|---|---|---|
+| blend_ode | `fb1d77a` | feat(sow_module): CP-41 reconnect with backoff, fresh session, last-saved time |
+
+### Push status
+**Not pushed** — awaiting explicit authorization, per standing instruction.
+
+### Unresolved issues
+- Same as the previous entry: CP-39's two-user manual test still not run; the `core.autocrlf` hash-
+  drift finding is still unresolved (needs the owner's sign-off on the fix approach).
+- CP-41's build-plan text also mentions re-verifying CP-11 (crash durability) "end to end in the
+  browser" — covered here by the new exactly-once-resend test, not by re-running CP-11's own Node-side
+  spike, which was never meant to run in a browser context.
+
+### Recommended next actions
+1. CP-42 (Snowflake-unreachable rule, graceful shutdown) — Sonnet 5.5 to implement, then a short,
+   targeted Opus review of the single-writer/drain guarantee specifically, per the user's own
+   budget-optimization plan from earlier in this session.
+2. Confirm the push plan for all the still-unpushed commits across the three repos.
+
+---
+
 ## Session: 2026-11-11 (later) — Complete CP-40 (presence, throttle, 5MB browser test)
 
 - **Agent/tool**: Claude Code, Sonnet 5

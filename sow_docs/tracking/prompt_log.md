@@ -601,3 +601,52 @@ user's own choice, not forgotten).
 Handoff to next prompt: CP-40 is complete. Recommended next checkpoint, per this session's own
 budget-optimization discussion with the user: CP-41 (reconnect, offline editing, saving state) on
 Sonnet 5.5, same as CP-40 — mechanical, well-specified plumbing against an already-built protocol.
+
+## CP-41: reconnect, offline editing and saving state — completed (2026-11-11)
+Summary: The browser provider now reconnects after an unexpected close with exponential backoff and
+full jitter, fetching a brand-new session (fresh ticket, possibly a different wsUrl) on every
+attempt rather than retrying the old, likely-expired ticket. Offline edits (made while the socket is
+down) were already captured by Yjs/`y-indexeddb` from CP-25 onward; this checkpoint's job was mainly
+to prove, with a real test, that they are resent exactly once — as one full-state frame, not one per
+edit — when the connection comes back, and to add the reconnect machinery that makes "coming back"
+actually happen automatically. The status bar gained a "last saved" time; connection state and the
+unsaved-changes warning were already correct from CP-35/CP-40 and are unchanged.
+Decisions/assumptions: Backoff is `delay = random(0, min(30s, 1s * 2^attempt))` (full jitter), reset
+to attempt 0 the next time a connection reaches READY — so one bad connection doesn't inflate the
+delay for an unrelated, later drop. Two close codes never trigger a reconnect: `ACCESS_REMOVED`
+(4403) and `LOCKED` (4410) — both are in `protocol.ts`'s own comments as "do not reconnect
+automatically" / "falls back to read-only"; everything else (plain network drops, `BAD_TICKET`,
+`OWNER_HINT`) retries. If `refreshSession` itself fails (e.g. genuinely offline), the provider keeps
+retrying with backoff rather than giving up — if access really was removed by then, the next
+successful reconnect's `resolve-access` will say so with a close code that does stop retrying. Chose
+not to wire the protocol's existing but unused `HelloMessage.lastDurableSeq` field, since "no loss,
+no duplicates" is already guaranteed by Yjs's CRDT idempotency on the existing full-state resend —
+wiring it would be a purely optional optimization (skip bytes already known server-side), not a
+correctness requirement, and the build plan's acceptance check doesn't ask for it.
+Registry (new or changed):
+- file: blend_ode/src/sow_module/editor/SowCollabProvider.ts: `openSocket`, `maybeScheduleReconnect`,
+  `reconnectNow`, `SowCollabProviderOptions.refreshSession`; `wsUrl` is now mutable (a fresh session
+  can name a different instance)
+- file: blend_ode/src/sow_module/editor/useCollabSession.ts: `requestCollabSession` (the session POST,
+  now also used standalone by the provider's reconnect path, independent of the hook's React state)
+- file: blend_ode/src/sow_module/editor/LexicalDraftEditor.tsx: wires `refreshSession` into the
+  provider, tracks and displays `lastCheckpointAt` in the status row
+- file: blend_ode/src/sow_module/editor/__tests__/SowCollabProvider.test.ts: six reconnect tests
+  (fresh session fetched and used, exponential backoff across repeated drops, backoff resets after
+  READY, no reconnect on access-removed, no reconnect after an explicit disconnect, exactly-once
+  resend of an offline edit) and a `serverClose()` test helper that actually fires `onclose`
+Verified (this session):
+- `npx tsc --noEmit`: clean.
+- ESLint on `blend_ode/src/sow_module/editor`: clean (one pre-existing, unrelated warning in a file
+  not touched this session).
+- Frontend `sow_module` Jest: 186 passed, 2 failed — the same pre-existing CRLF/hash-drift failures
+  as CP-40's entry above (unrelated; no shared/ file touched this session). The previously-flaky
+  `SowLexicalHarness.test.tsx` did not fail this run.
+- Collab Vitest: unchanged at 77 passed, 6 skipped — no collab/backend file was touched this
+  checkpoint (CP-41's work was entirely browser-side).
+- Production build (`CI=false npm run build`): succeeds.
+Open questions for the user: none new.
+Handoff to next prompt: CP-42 (Snowflake-unreachable rule and graceful shutdown). Per the earlier
+budget discussion: implement on Sonnet 5.5, then a short, targeted Opus review pass specifically on
+the "never two writers" / drain guarantee before calling it done — that is the one place in this
+checkpoint where a subtle bug would be expensive to miss and hard to notice by inspection alone.

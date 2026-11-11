@@ -152,3 +152,15 @@ own `git log` for that history; it is not transcribed here.
 
 CP-40 is now complete. Still open from CP-39: the two-user manual test (explicitly deferred by the
 user this session, not forgotten) — see `TASK_BOARD.md` and `sow_docs/tracking/phaseD_report.md`.
+
+---
+
+## 2026-11-11 (later) — CP-41 completed
+
+### blend_ode (frontend)
+- `feat(sow_module)` reconnect with exponential backoff/full jitter and a fresh session per attempt
+  (`SowCollabProvider`); `requestCollabSession` extracted for standalone reuse; "last saved" time in
+  the status bar; test proving an offline edit resends exactly once (`fb1d77a`)
+
+No backend/collab change this checkpoint. Next: CP-42 (Snowflake-unreachable rule, graceful
+shutdown).

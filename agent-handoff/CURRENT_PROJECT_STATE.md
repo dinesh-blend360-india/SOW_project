@@ -115,3 +115,14 @@ to the SOW module work but are relevant to anyone continuing development here.
   noise, not real content drift (verified with `git diff --ignore-all-space`). See
   `KNOWN_ISSUES_AND_BLOCKERS.md` #13.
 - **Next:** CP-41 (reconnect, offline editing, saving state).
+
+## Update 2026-11-11 (CP-41)
+- **CP-41 is now complete.** The browser provider reconnects after an unexpected close with
+  exponential backoff + full jitter, fetching a brand-new session (fresh ticket, possibly a new
+  wsUrl) on every attempt. Offline edits already persisted via `y-indexeddb`; this checkpoint added
+  the automatic reconnect and proved, with a test, that offline edits resend exactly once as a single
+  full-state frame. Status bar now also shows the last checkpoint time. `blend_ode` only — no
+  backend/collab file was touched. Not pushed yet.
+- **Next:** CP-42 (Snowflake-unreachable rule and graceful shutdown) — plan to implement on Sonnet
+  5.5, then a short Opus review of the "never two writers"/drain guarantee specifically before
+  calling it done.
