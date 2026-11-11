@@ -49,3 +49,65 @@ STILL BROKEN / NOT DONE / NEEDS A DECISION
 WHAT TO DO NEXT
 - Read NEW_AGENT_INSTRUCTIONS.md, then agent-handoff/README.md, then the files it points to.
 - Pick up CP-40 where it left off (see TASK_BOARD.md), or continue to CP-41 per the build plan.
+
+===========================================================
+SESSION: 2026-11-12 — Review of CP-40 to CP-48, fixes for the open items
+===========================================================
+
+WHAT I DID
+- Ran the baseline tests in all three repos first (all green before changes).
+- Fixed a real data-loss bug found in the CP-42 review: the save queue could lose an update if two
+  saves for the same document overlapped. It now runs one save at a time per document, and removes
+  only the updates it actually sent. Two regression tests were added; they fail on the old code.
+- Added the server-side cap of 3 levels for nested lists (the editor had it, the server did not).
+  Four tests added.
+- Made merged table cells (colspan / rowspan) export correctly to Word and PDF. Before, merged
+  cells came out as plain separate cells. Five tests added.
+- Updated the known-issues list and the changelog, and the to-do file for you.
+
+CHECKPOINTS / TASKS
+- CP-40 (presence, sync): no pending code found. Two-browser manual check still to do by you.
+- CP-41 (reconnect): no pending code found.
+- CP-42 (outage): overlapping-save bug FIXED. Two items still open and need YOUR live Snowflake
+  test first: per-document lease renewal (KNOWN_ISSUES #14) and atomic fencing check (#16).
+- CP-43 (compaction): no pending code found.
+- CP-44, CP-46, CP-47 (multi-instance, scale tests): deliberately deferred by the team; not started.
+- CP-45 (access re-checks): no pending code found.
+- CP-48 (intake pipeline): no pending code found.
+- Gap from CP-28 (server list cap): FIXED.
+- Gap from CP-30 (merged-cell export): FIXED.
+
+TESTS I RAN AND THE REAL RESULT
+- collab (vitest) -> 107 passed, 7 skipped (live Snowflake, needs real credentials)
+- collab tsc and eslint -> clean
+- backend full suite (pytest) -> 565 passed, 9 failed (the 9 are the known pre-existing failures)
+- backend sow_module subset -> 120 passed, before the export fix; 135 with export tests
+- frontend sow_module (jest) -> 199 passed (not changed this session)
+- The new persist-queue tests: 2 failed on the old code, 2 passed on the fix.
+
+FILES CHANGED (by repo)
+- blend_ode: none this session
+- blend_ode_be: persist-queue.ts, persist-queue.test.ts, html_allowlist.py,
+  test_sow_module_list_depth.py, sow_docx_export.py, sow_pdf_export.py,
+  test_sow_module_table_spans.py
+- root: KNOWN_ISSUES_AND_BLOCKERS.md, CHANGELOG.md, agent2.txt, TODO_FOR_YOU.txt (not committed)
+
+COMMITS (not pushed)
+- blend_ode_be d0c45e5: fix overlapping flushes (CP-42 review, KNOWN_ISSUES #15)
+- blend_ode_be e2e4842: server enforces the 3-level list cap (CP-28 gap)
+- blend_ode_be 1a588fb: merged cells export to Word and PDF (CP-30 gap)
+- root 953df76: mark KNOWN_ISSUES #15 resolved
+- root b5cdb1a: record the 2026-11-12 fixes
+
+PUSH STATUS
+- not pushed, awaiting confirmation
+
+STILL BROKEN / NOT DONE / NEEDS A DECISION
+- KNOWN_ISSUES #14 and #16: need a live Snowflake test before any SQL change.
+- KNOWN_ISSUES #13: core.autocrlf breaks hash-exact tests on Windows; needs the owner's decision.
+- Outside-change reload: needs a design decision (see TASK_BOARD).
+- CP-39 two-user manual test: still to do by a person.
+
+WHAT TO DO NEXT
+- Owner runs the live Snowflake check for #14 and #16 (see TODO_FOR_YOU.txt).
+- Decide the autocrlf fix (#13).
