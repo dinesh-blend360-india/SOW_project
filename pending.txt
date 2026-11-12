@@ -129,3 +129,6 @@ D5. Deferred by team agreement (budget): CP-44 (multi-instance), CP-46 and
 
 D6. Participants list = the native editor's list (_participants), exposed at
     GET /sows/{id}/collab/participants.
+
+B2a. CP-60 guest page UI (frontend): mount the live editor for a guest with the guest session token; comment and
+     suggest only. Server side is done (2026-11-12). Needs the native guest page flow as the model.

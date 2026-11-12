@@ -1173,3 +1173,14 @@ Runs after a successful checkpoint of a room holding a redacted comment, only if
 Tested on the in-memory store: the original text is gone from the update log and the new snapshot.
 NOT applied to Snowflake. Still open: old snapshot rows (their text) need a delete; that needs a new DataStore method
 and SQL, which needs approval.
+
+## CP-60: Guest reviewers, server side (2026-11-12) -- guest page UI NOT built yet
+Summary: A guest opens the live editor with the guest session token from the existing invitation flow.
+POST /sows/{id}/collab/guest-session checks the token with the existing authorize_guest_session (active, unexpired,
+unrevoked) and returns a commenter ticket (actor kind guest, id = invitation id). The Owner's resolve-access for a guest
+re-checks the invitation each time (not revoked, not expired, same deal). Guests get read, comment, suggest only.
+Tests: backend tests/test_sow_module_guest_reviewers.py (9); Node server tests for a guest (commenter connects, comments,
+text change is disconnected).
+Not done: the guest page variant in the frontend (SowNativeGuestReview-style mount of the live editor). Revocation
+push (CP-61) not wired yet; the recheck timer alone applies it.
+Decisions: no change to how invitations are created, verified or emailed.
