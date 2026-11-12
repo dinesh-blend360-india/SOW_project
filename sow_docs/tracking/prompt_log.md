@@ -856,3 +856,42 @@ insert endpoint), not something client-side paste/add-ins needed — not attempt
 CP-49's job. Commit: blend_ode `dcd69eb`.
 Handoff: CP-49 (LLM insert) remains the deferred next-feature item; CP-51 (legacy drafts) is the other
 reasonable pick.
+
+## CP-49: LLM and generated content: client and server paths (2026-11-12)
+Summary: Generated content now enters the live document through the editor, with one audit row per
+insertion. Decision (owner, 2026-11-12, Option A): the audit row stores only a SHA-256 of the sanitized
+HTML, the model, the request id, the target, the source and who; no prompts and no raw model responses.
+The server-callable endpoint (task 2) is deferred: it needs a durable pending-insert table, and the
+HTML-to-Lexical conversion exists only in the browser (ADR-008/009), so a service call with nobody
+online has nowhere safe to wait. Recorded in pending.txt.
+Decisions/assumptions:
+- Insert happens in an open editor (browser applies it). No new table, no migration.
+- Idempotency is kept in the editor (per session) and in the Owner (per document, last 1000 keys, per
+  process). Multi-instance idempotency waits for CP-44.
+- The audit write is best-effort and never blocks editing: a failed write is logged and the key is
+  released so a re-send can record it. Notices made while offline are queued (max 50) and sent after the
+  reconnect has synced.
+- Role gate: editors and SOW admins only (capability `edit`), enforced by the editor (read-only editor
+  refuses) and again by the Owner (access_denied).
+- Task 4 finding: the only path that inserts into the open document from the client is add-ins
+  (`handleInsertAddInSection`). Draft generation, continue-from-version, suggested-fix accept, intake
+  sync and restore all create or replace a whole version on the server and the screen reloads it, so they
+  are whole-draft replacements and belong to CP-52. In Lexical mode `content` is only the starting state,
+  so those flows do not reach the live editor until CP-52 wires them.
+- Add-ins in Lexical mode: the add-in service runs unchanged on the editor's current HTML (not the React
+  copy), and the result is applied with `setHtml(html, {source: 'addin', requestId})`. CKEditor path is
+  untouched.
+- Known risk, unchanged: `suggested_fix_agent` returns CKEditor-era HTML; intake sanitizes it, but the
+  prompt may need updating (audit_backend.md item 5).
+Registry (new or changed):
+- file: blend_ode/src/sow_module/shared/hash.ts: sha256Hex, plain TypeScript (browser, jest, Node)
+- type: ContentInsertedMessage, INSERT_TARGETS, INSERT_SOURCES in shared/protocol.ts: CONTENT_INSERTED notice
+- file: blend_ode_be/sow_module/collab/src/owner/insert-audit.ts: parseInsertAudit, InsertAuditRecorder
+- function: createEditorApi (editorApi.ts): now takes reportInsert; insertContent and setHtml check
+  editability, dedupe by idempotency key and report; setHtml returns boolean and takes an optional record
+- method: SowCollabProvider.reportContentInserted: queued send of the notice
+- wiring: connection.ts handles CONTENT_INSERTED; server.ts builds the recorder; DraftEditorScreen routes
+  add-in insertion through the live editor when the Lexical flag is on
+- table / migration: none
+Open questions for the user: none new (task 2 endpoint waits on a table approval).
+Handoff to next prompt: CP-50 (streaming preview and smart paste), then CP-51, then CP-52.

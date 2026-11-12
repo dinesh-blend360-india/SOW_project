@@ -1682,8 +1682,8 @@ Handoff to next prompt: <one line>
 
 **Tasks:**
 1. Client API `insertContent({format, content, target})` with targets cursor, end, after block, replace block. Editors and SOW admins only.
-2. Server path: a FastAPI endpoint `POST /sows/{sow_id}/collab/insert` (same auth as the session endpoint) that forwards `{format, content, target, idempotencyKey, meta: {model, requestId}}` to the Owner over the internal channel, so backend-generated content can be placed even when called by a service. Idempotent on the key.
-3. Record each insertion in the audit store (who, model, request id, content hash). Do not store prompts or raw responses; ask the user whether they should be stored and record the answer.
+2. **(Deferred 2026-11-12: needs a durable pending-insert table; see pending.txt.)** Server path: a FastAPI endpoint `POST /sows/{sow_id}/collab/insert` (same auth as the session endpoint) that forwards `{format, content, target, idempotencyKey, meta: {model, requestId}}` to the Owner over the internal channel, so backend-generated content can be placed even when called by a service. Idempotent on the key.
+3. Record each insertion in the audit store (who, model, request id, content hash). Do not store prompts or raw responses. **Decided 2026-11-12 (Option A):** store only the final generated HTML hash, model and actor; no prompts or raw LLM responses.
 4. Find in `audit_frontend.md` how suggested fixes and generated drafts currently reach CKEditor, and route those same calls to `insertContent` when the Lexical editor is active, without editing the CKEditor path.
 5. Tests: each target; role denial; idempotent replay inserts once; the CKEditor path still works with the flag off.
 
@@ -1745,12 +1745,13 @@ Handoff to next prompt: <one line>
 2. The original HTML stays untouched in `SOW_DRAFT_VERSIONS`. A checkpoint with unchanged content must not create a spurious change: compare normalized HTML and skip the save when equal.
 3. A batch fidelity script `blend_ode_be/scripts/` or `blend_ode_be/sow_module/collab/scripts/` that reads a user-supplied set of draft HTML files, runs them through import and export, and writes a combined report. It never writes to Snowflake.
 4. Tests: seeding from fixtures; a no-op open and checkpoint creates no new revision; report lists approved losses.
+5. **Open Items scroll (CKEditor parity gap):** `DraftEditorScreen.tsx` currently finds placeholders via `.ck-editor__editable` and `sow-studio-manual-placeholder` DOM selectors. Those selectors return nothing in the Lexical editor. Wire the open-items click handler to call `lexicalApiRef.current.scrollToBlock(blockId)` using the block ID injected by `ensureSectionAnchors`. The right-rail open-items list display is unaffected; only the click-to-scroll focus breaks. Test: clicking an open item in Lexical mode scrolls the editor to the correct block.
 
 **Constraints:** Opening a document must never modify existing data.
 
-**Expected outcome:** Safe, reportable legacy opening.
+**Expected outcome:** Safe, reportable legacy opening. Open-items scroll works in Lexical mode.
 
-**Acceptance checks:** No defects on the fixture set. A no-op session leaves revisions unchanged.
+**Acceptance checks:** No defects on the fixture set. A no-op session leaves revisions unchanged. Clicking an open item scrolls to the correct placeholder in the Lexical editor.
 
 **Logging:** Append the CP-51 entry.
 

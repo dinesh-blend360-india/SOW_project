@@ -50,14 +50,13 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 
 ## NOT_STARTED — next in the build plan (not yet begun)
 
-### SOW-CP49: LLM and generated content insert
-- **Priority**: Medium-High
+### SOW-CP49-ENDPOINT: Server-callable insert (`POST /sows/{sow_id}/collab/insert`), CP-49 task 2
+- **Priority**: Low until a backend job with no user online needs it
 - **Affected repository**: both
-- **Dependencies**: **needs a product decision from the owner before starting** — should LLM
-  prompts/responses be stored in the audit log? (the build plan's own CP-49 text asks this explicitly)
-- **Relevant files**: `sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md` (CP-49 section)
-- **Description**: New `POST /sows/{sow_id}/collab/insert` endpoint, idempotency, audit recording,
-  routing the existing suggested-fix/continue-draft flows through it.
+- **Dependencies**: a new durable pending-insert table (migration needs owner approval, CP-16/17) and a
+  retention decision (CP-66). Browser-side CP-49 is done (see COMPLETED).
+- **Description**: Deferred. The editor applies inserts because HTML-to-Lexical conversion exists only in
+  the browser; a service call with nobody online needs somewhere durable to wait.
 
 ### SOW-CP50: Streaming preview and smart paste
 ### SOW-CP51: Existing (CKEditor) drafts open safely in Lexical
@@ -66,7 +65,10 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 - **Priority**: Medium (CP-51 specifically is correctness-on-real-data, worth prioritizing over 49/50)
 - **Affected repository**: both (mostly blend_ode_be for 51/52)
 - **Relevant files**: `sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md` (CP-50 to CP-53 sections)
-- **Description**: Not started — see the build plan for each checkpoint's own task list.
+- **Description**: Not started — see the build plan for each checkpoint's own task list. CP-51 now also
+  carries the Open Items scroll fix and a save-parity step (open items and add-ins recomputed after a
+  Lexical checkpoint); CP-52 also owns routing the whole-draft replacement flows (continue, intake sync,
+  suggested-fix accept, restore) into the live editor.
 
 ### Phase G (CP-54–61): Mentions, comments, suggestions, guests
 - **Priority**: Medium; CP-54 is a decision gate needing the owner's answer before coding starts
@@ -144,6 +146,11 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 ---
 
 ## COMPLETED
+
+### SOW-CP49: Generated content insert (editor side) — done 2026-11-12
+- **Affected repository**: both
+- **Description**: `insertContent` and add-in insertion in Lexical mode audited (hash only, Option A),
+  idempotent, editors and admins only. Owner handles `CONTENT_INSERTED`. See `prompt_log.md` CP-49.
 
 ### SOW-CP00–CP43, CP-45, CP-48: SOW collaboration module build-out
 - **Affected repository**: both

@@ -253,3 +253,22 @@ fail on the old code and pass on the fix. Original description kept below for hi
   `sow_module/collab/.env.example` is missing `COLLAB_CHECKPOINT_QUIET_MS` (default 30000 in code).
 - **RESOLVED for print:** verified with a generated PDF (one A4 page). Earlier print output was Letter size
   and included the toolbar.
+
+## Update 2026-11-12 (CP-49)
+- **OPEN:** whole-draft replacements (continue from version, intake sync, regenerate, suggested-fix accept,
+  restore) set the HTML in React state and rely on the editor reloading it. The Lexical editor reads
+  `content` only as its starting state, so with the flag on these flows do not change the live document.
+  CKEditor is unaffected. To be handled in CP-52. Add-in insertion is already routed (CP-49).
+- **OPEN:** the Lexical save (`handleSave`) only calls the checkpoint; it does not recompute open items,
+  added add-ins, signature placement or draft name the way the CKEditor save does, so the saved copies of
+  those can go stale. Planned as a save-parity step with CP-51.
+- **OPEN:** Open Items click-to-scroll finds the editor through `.ck-editor__editable` in three places in
+  `DraftEditorScreen.tsx` and styles scoped to `.sow-studio-ckeditor-shell`; nothing is found in Lexical.
+  CP-51 task 5.
+- **PRE-EXISTING, environment:** 6 suites under `src/pricing-tool/components` (DraftEditorScreen
+  integration, SignOffScreen, DealDesk, RiskFlagsTab, PricingTemplateDetails, CopyPricingTemplateButton)
+  fail here with `Failed to execute 'contains' on 'Node'` (111 tests). The same 60 DraftEditorScreen tests
+  fail with and without the CP-49 change, so they cannot currently verify `DraftEditorScreen` edits.
+  Likely a jsdom or jest-dom version mismatch in this checkout; not investigated.
+- **PRE-EXISTING lint:** `testing/chunks.test.ts:29` and `testing/intake.test.ts:39` have
+  `jest/no-conditional-expect` errors.

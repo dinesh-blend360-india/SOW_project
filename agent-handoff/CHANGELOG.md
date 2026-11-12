@@ -231,3 +231,12 @@ checkpoint and its own review were done entirely on Sonnet.
 
 ### Root
 - `docs` KNOWN_ISSUES #15 marked resolved (`953df76`)
+
+## 2026-11-12 — CP-49: generated content insert (editor side)
+
+### blend_ode
+- `feat(sow_module)` insertContent and add-in insertion audited, idempotent, role-gated; shared SHA-256 and
+  `CONTENT_INSERTED` message; add-ins routed through the live editor in Lexical mode
+
+### blend_ode_be
+- `feat(sow_module)` Owner records `content_inserted` audit rows (hash only, Option A); shared copy synced

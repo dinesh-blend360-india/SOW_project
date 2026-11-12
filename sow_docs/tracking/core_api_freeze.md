@@ -50,6 +50,13 @@ Close codes: `4401` bad ticket, `4403` access removed (do not reconnect), `4410`
 
 ## Change log
 
+- **2026-11-12 (CP-49, non-breaking addition):** client text message `CONTENT_INSERTED`
+  `{type, idempotencyKey, contentHash, target, source, model?, requestId?}`. `contentHash` is a lowercase
+  SHA-256 hex of the sanitized HTML, never the content. `target` is cursor, end, afterBlock, replaceBlock
+  or document; `source` is llm, addin or api. Requires capability `edit` (otherwise `access_denied`);
+  a malformed message gets `protocol_error` (non-fatal). The Owner writes one `content_inserted` audit
+  row per idempotency key. No new server message. Existing messages are unchanged.
+
 - **2026-11-11 (CP-40, non-breaking addition):** binary frame kind `2` = CHUNK added to `FRAME_KIND`
   (one 256 KB piece of a larger SYNC payload, in order, max 16 MB assembled). Close code `1013`
   (room full, more than 100 connections) added. Config `COLLAB_CHECKPOINT_QUIET_MS` (default 30000)
