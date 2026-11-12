@@ -1224,3 +1224,9 @@ status, so the watermark is unchanged by live saves. To confirm in a browser.
 Golden tests: test_sow_module_export_parity.py (26). Differences: sow_docs/tracking/export_parity.md.
 Fix in our serializer: nested lists folded into their parent item (yjs-html.ts). Test: yjs-html.lists.test.ts.
 Download: same handler as CKEditor (existing chrome test).
+
+## Sandbox: real live-editor components (2026-11-12)
+/sow-sandbox now uses the real CommentsPanel, the real editor API (createEditorApi, selection anchors, highlight, replace)
+and the block ids, on an in-memory Yjs document. A role switch shows viewer, commenter, editor and admin. No new component
+was built for the sandbox. The sandbox still has no server and saves nothing.
+Checked: type-check and lint clean; dev server returns the page (200). A browser run has not been done from here (TODO_FOR_YOU).

@@ -140,3 +140,6 @@ CP-63/64/65 (2026-11-12) -- follow-ups
   CKEditor outputs for identical content. Needs real drafts (TODO_FOR_YOU 6).
 - Watermark follows the sign-off status, not live saves (by design). Confirm in a browser.
 - Owner flush endpoint and finalize wrapper change the finalize path: re-run the finalize tests after any change there.
+
+A0 (update 2026-11-12): /sow-sandbox now shows the real live-editor components (comments panel, suggestions, roles)
+in memory only, to see them work. Still temporary: remove the route and SowSandbox.tsx before rollout.
