@@ -895,3 +895,35 @@ Registry (new or changed):
 - table / migration: none
 Open questions for the user: none new (task 2 endpoint waits on a table approval).
 Handoff to next prompt: CP-50 (streaming preview and smart paste), then CP-51, then CP-52.
+
+## CP-50: Streaming preview and smart paste (2026-11-12)
+Summary: Added a streaming-preview building block and smart paste to the Lexical editor. Streaming:
+`editorApi.beginStream(request)` returns a handle (push, commit, cancel, fail); pushed text is held in a
+local buffer and shown by `StreamingGhost` outside the editor, so it is never in the shared document and
+collaborators never see partial text. `commit()` places the whole result once through `insertContent`
+(intake, audit notice, one undo step). Cancel and errors leave the document unchanged. Smart paste: plain
+text that looks like Markdown (a table, a heading in several lines, or two or more list lines) is
+converted through intake with a notice, and the first Ctrl+Z puts the original text back as plain text.
+Decisions/assumptions:
+- No screen calls `beginStream` yet: the LLM runs server-side as whole-draft generation and there is no
+  streaming endpoint. The block is complete and tested; wiring waits for a streaming source (pending.txt).
+- One preview at a time; refused for a read-only editor; a commit is refused if the editor became
+  read-only meanwhile; any error blocks commit until dismissed; buffer capped at 500,000 characters.
+- Smart paste is deliberately conservative (one-line text and single bullets are never converted).
+  Ctrl+Shift+V always pastes plain text. HTML clipboard content is never smart-converted.
+- "One undo returns to plain": the undo command is let through (it removes the formatted paste), then the
+  original text is inserted as plain text in a new step. Editing anything in between cancels the offer. A
+  second Ctrl+Z removes the plain text.
+- Verified with the headless editor and the standard history. With live collaboration the undo is done by
+  the Yjs undo manager; that path is not verified here (TODO_FOR_YOU).
+- Pasting into the middle of a paragraph merges the first pasted block into it (existing Lexical behavior
+  for every paste); smart paste behaves the same.
+Registry (new or changed):
+- file: blend_ode/src/sow_module/editor/streaming.ts: createStreamController, StreamHandle, MAX_STREAM_CHARS
+- component: StreamingGhost in editor/StreamingGhost.tsx: local preview block (not printed)
+- api: SowEditorApi.beginStream, subscribeStream, cancelStream in editorApi.ts
+- function: looksLikeMarkdown, registerPasteIntake option onSmartPaste in editor/paste.ts
+- css: .sowx-ghost in editor/sowx.css
+- table / migration: none
+Open questions for the user: none.
+Handoff to next prompt: CP-51 (legacy drafts open safely, plus the Open Items scroll fix and save parity).

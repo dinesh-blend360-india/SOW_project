@@ -240,3 +240,8 @@ checkpoint and its own review were done entirely on Sonnet.
 
 ### blend_ode_be
 - `feat(sow_module)` Owner records `content_inserted` audit rows (hash only, Option A); shared copy synced
+
+## 2026-11-12 — CP-50: streaming preview and smart paste
+
+### blend_ode
+- `feat(sow_module)` streaming preview (local ghost, single commit) and Markdown smart paste with undo to plain text

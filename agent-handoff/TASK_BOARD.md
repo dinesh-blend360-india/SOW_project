@@ -58,7 +58,6 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 - **Description**: Deferred. The editor applies inserts because HTML-to-Lexical conversion exists only in
   the browser; a service call with nobody online needs somewhere durable to wait.
 
-### SOW-CP50: Streaming preview and smart paste
 ### SOW-CP51: Existing (CKEditor) drafts open safely in Lexical
 ### SOW-CP52: Regeneration, intake sync, reset to latest in a live room
 ### SOW-CP53: Intake messages, fuzzing, Phase F close report
@@ -146,6 +145,12 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 ---
 
 ## COMPLETED
+
+### SOW-CP50: Streaming preview and smart paste — done 2026-11-12
+- **Affected repository**: blend_ode
+- **Description**: Streaming preview block (local ghost, one commit, cancel and error leave the document
+  unchanged) and Markdown smart paste with undo-to-plain. No screen starts a stream yet (no streaming LLM
+  endpoint exists). See `prompt_log.md` CP-50.
 
 ### SOW-CP49: Generated content insert (editor side) — done 2026-11-12
 - **Affected repository**: both

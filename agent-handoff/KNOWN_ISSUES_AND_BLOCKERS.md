@@ -272,3 +272,10 @@ fail on the old code and pass on the fix. Original description kept below for hi
   Likely a jsdom or jest-dom version mismatch in this checkout; not investigated.
 - **PRE-EXISTING lint:** `testing/chunks.test.ts:29` and `testing/intake.test.ts:39` have
   `jest/no-conditional-expect` errors.
+
+## Update 2026-11-12 (CP-50)
+- **OPEN:** nothing in the app starts a streaming preview yet; the LLM runs server-side as whole-draft
+  generation. `beginStream` is built and tested but unused until a streaming source exists.
+- **OPEN, not verified here:** smart-paste undo-to-plain was tested with the standard history. In the live
+  editor the Yjs undo manager does the undo; it should tag its changes as historic, but this was not
+  exercised with a real session.
