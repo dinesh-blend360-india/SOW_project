@@ -305,3 +305,13 @@ fail on the old code and pass on the fix. Original description kept below for hi
 - **OPEN:** the Owner keeps the room's draft meta and the stale flag in memory; after a restart they are restored
   from the document (hash) but the stale flag is recomputed on open.
 - **OPEN, design:** every first open of a document makes one extra FastAPI document-state call for the reopen check.
+
+## Update 2026-11-12 (CP-55/56)
+- **RESOLVED:** the live editor requested its session with `sow:<id>:draft`, which the backend rejects with 400. Every
+  live-editor check so far (CP-38 onward) would have failed at session creation from the real screen. Fixed.
+- **OPEN:** mentions are typed in comments only; a MentionNode inside the document text is not built.
+- **OPEN:** mention notification waits for the next checkpoint (quiet period, default 30 s); explicit Save is immediate.
+- **OPEN:** suggestions (accept/reject) and resolve-thread are not built.
+- **OPEN, not browser-tested:** hover highlight depends on the CSS Custom Highlight API; no highlight where it is missing.
+- **OPEN:** antd's auto-sizing TextArea fails under this jsdom setup ("parameter 1 is not of type 'Node'"). The panel's
+  tests use a plain text area. The same failure affects other component suites in this checkout (pre-existing).

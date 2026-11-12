@@ -184,5 +184,9 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 ### SOW-CP53: Intake messages, fuzzing and Phase F close — done 2026-11-12
 - Removal wording shared by paste and LLM insert; legacy-open notice for everyone; fuzzing at 2000 documents per format; `phaseF_report.md`. Regression green. Real-draft fidelity run still pending (needs exports).
 
-### SOW-CP54: Decision gate (D-B1) and participants — partly done 2026-11-12, BLOCKED on D-B1
+### SOW-CP55/56: Mentions and anchored comment threads — built 2026-11-12 (not browser-tested)
+- Comments in the live document (option A), checkpoint to the native columns, mention delivery through the existing
+  native code, hover highlight, orphan handling. Not built: document MentionNode, suggestions, resolve. See prompt_log.
+
+### SOW-CP54: Decision gate (D-B1) and participants — answered (A) 2026-11-12
 - Design written (`design_collab_features.md`); participants endpoint built and tested. The owner must answer D-B1 before CP-55.

@@ -270,3 +270,13 @@ checkpoint and its own review were done entirely on Sonnet.
 
 ### blend_ode_be
 - `feat(sow_module)` GET /sows/{sow_id}/collab/participants (+ tests)
+
+## 2026-11-12 — CP-55/56: mentions and anchored comments; live session fix
+
+### blend_ode
+- `feat(sow_module)` comment threads in the live document: select, comment, hover to highlight, reply, delete, mentions
+- `fix(sow_module)` the live editor requested its session with `sow:<id>:draft`, which the backend rejects; now `sow-<id>`
+
+### blend_ode_be
+- `feat(sow_module)` checkpoint stores live comment threads in the native columns and delivers mentions through the native code
+- `feat(sow_module)` Owner: commenters may change only the comments map; threads are sent when they change

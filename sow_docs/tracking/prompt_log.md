@@ -1042,3 +1042,66 @@ Registry (new or changed):
 - table / migration: none
 Open questions for the user: D-B1 (store live comments and suggestions in the Yjs document and persist them into the existing columns at checkpoint? Option A recommended).
 Handoff to next prompt: CP-55 (mentions) after D-B1 is answered.
+
+## CP-55: Mentions (2026-11-12)
+Summary: Mentions are chosen from the participants list in the comment composer and stored by email in the
+comment's `mentions` array (the shape the native editor already uses). At checkpoint the Owner sends the
+live threads to FastAPI, which stores them and delivers new mentions through the native delivery code
+(imported, not copied): idempotent per comment and recipient, email only when ENABLE_SOW_EMAIL_SENDING is on,
+guest links for guests. The Node service never sends email.
+Decisions/assumptions:
+- D-B1 answered: option A (live threads in the Yjs document, persisted into the existing COMMENT_THREADS and
+  SUGGESTIONS columns at checkpoint, native editor unchanged).
+- Mentions are notified at the next checkpoint, so up to the quiet period (default 30 s) after the comment is
+  written, not instantly. Explicit Save sends them at once.
+- Not built: a MentionNode inside the document text. Mentions exist in comments only (typeahead in the composer
+  and reply box). The document MentionNode is deferred and listed in KNOWN_ISSUES.
+- Viewers cannot comment: the composer is hidden, and the Owner refuses anything from a viewer.
+- Not verified here: idempotent delivery and the email-off suppression rely on the existing native code and were not
+  re-tested end to end; live mail was not sent.
+Registry (new or changed):
+- backend: src/sow_module/live_comments.py: record_live_comments, normalize_threads, normalize_suggestions
+- backend: src/sow_module/collab_internal.py: CheckpointRequest.comment_threads, suggestions; checkpoint records comments
+  before the unchanged check (import done locally to avoid a cycle with native_collaboration)
+- Node: owner/live-comments.ts: threadsFrom, serializeThreads (Y.Map `comments`, one JSON value per thread)
+- Node: owner/checkpoint.ts: sends commentThreads when they changed, with the stored HTML (never the converted one)
+- Node: owner/validation.ts: isCommentsOnlyUpdate (commenters may change only the comments map)
+- Node: owner/connection.ts: commenter comment-only updates accepted; anything else still closes with 4403
+- Node: owner/room.ts: lastCommentsSent
+- contract: CheckpointRequest.commentThreads / suggestions (shared bridge.ts)
+- table / migration: none (writes SOW_NATIVE_DOCUMENTS.COMMENT_THREADS and SUGGESTIONS only; REVISION not bumped)
+Open questions for the user: none new.
+Handoff to next prompt: CP-56 continues below.
+
+## CP-56: Comment threads anchored in the document (2026-11-12)
+Summary: Select text in the live editor, click "Comment on selection", write a comment, and the thread is stored in
+the shared document with an anchor (block id + character range + quoted text). Hovering a thread highlights its text
+in the editor (CSS Custom Highlight API); the document is not changed by hovering. Replies, deletion by the author,
+and threads whose text has gone are shown as "The text this comment was on has changed" (never dropped).
+Strategy (decided and stated to the owner):
+- Storage: the Yjs `comments` map (last write wins per thread) -> checkpoint -> native columns.
+- Anchor: block id + offsets + quote. Offsets are used while the text there still matches the quote; otherwise the
+  quote is searched again in the block; otherwise the thread is orphaned.
+- Hover: a local highlight, never a document change, cleared on leave and on unmount.
+Decisions/assumptions:
+- Suggestions (accept or reject) are not built; they are carried in the checkpoint as an empty list when the
+  Owner has none. Resolve-thread is not built.
+- The "Delete thread" control is shown only to the author of the first comment.
+- Anchor offsets are plain-text offsets inside a block; inline formatting does not change them.
+- Blocks are found by their stable block id (CP-33).
+- Not verified in a browser: hover highlight on real text; CSS Custom Highlight support depends on the browser.
+- Real bug fixed on the way (session never opened from the draft screen): DraftEditorScreen passed
+  `sow:<id>:draft` to the session endpoint, which only accepts `sow-<deal id>` (400 "Invalid SOW id"). Before this fix
+  the live editor could not open a session from the screen, so the two-browser checks listed in TODO_FOR_YOU for
+  CP-49..52 could not have passed. Fixed in DraftEditorScreen.tsx and LexicalDraftEditor.tsx.
+- Participants: GET /sows/{sow_id}/collab/participants (CP-54) feeds the mention list; if it fails the list is empty.
+Registry (new or changed):
+- frontend: editor/comments.ts (thread model, anchors, mentions, document storage)
+- frontend: editor/CommentsPanel.tsx (threads, composer, mentions, hover highlight, delete, reply)
+- frontend: editorApi.ts: selectionAnchor, anchorRange, highlightAnchor
+- frontend: SowCollabProvider.ts: commenters send comment-only changes
+- frontend: sowx.css: ::highlight(sow-comment-hover)
+- frontend: LexicalDraftEditor.tsx: panel mounted, participants fetched; DraftEditorScreen.tsx: documentId fix
+- table / migration: none
+Open questions for the user: none new.
+Handoff to next prompt: CP-57 (suggestions, resolve, and what remains of Phase G) after the browser checks in TODO_FOR_YOU.
