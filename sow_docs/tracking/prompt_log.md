@@ -1184,3 +1184,11 @@ text change is disconnected).
 Not done: the guest page variant in the frontend (SowNativeGuestReview-style mount of the live editor). Revocation
 push (CP-61) not wired yet; the recheck timer alone applies it.
 Decisions: no change to how invitations are created, verified or emailed.
+
+## CP-60: Guest reviewers, complete except revocation push (2026-11-12)
+Frontend: /sow-live-guest page (SowLiveGuestReview). Invitation link and 6-digit code (existing verify), session kept in
+this tab only, then the live editor connects with the guest session token (commenter ticket). Build flag
+REACT_APP_SOW_LEXICAL_EDITOR=true required for now (guests have no user flags).
+Tests: 5 page tests (flag off, missing link, code flow, wrong code, reopen). The antd components on the page are stood in
+by plain elements in these tests (jsdom issue, see CommentsPanel.test.tsx); browser testing is required.
+Still open: CP-61 (instant revocation push and the full role matrix).
