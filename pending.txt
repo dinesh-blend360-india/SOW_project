@@ -1,0 +1,33 @@
+THINGS PENDING (kept up to date by Claude; not committed)
+
+DEFERRED BY TEAM AGREEMENT (2026-11-11, budget). Do later, not now.
+
+CP-44: Socket routing and connection limits (multi-instance)
+- Only needed once more than one Owner instance is deployed behind a load balancer.
+- Start when: the first second Owner instance is planned for deployment.
+- Plan section: sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md (CP-44, line ~1521).
+
+CP-46: Scale harness and scenario scripts
+- Builds the simulated-editor test harness. Expensive in compute and tokens.
+- Start when: close to the real production rollout, after CP-44.
+- Plan section: CP-46, line ~1582.
+
+CP-47: Scale measurements and approved gates
+- Measures behaviour with 10 to 100 simulated editors and needs approved gates. Most expensive item in the plan.
+- Start when: after CP-46, and only with the owner's approval of the cost.
+- Plan section: CP-47, line ~1612.
+
+OPEN, NEEDS YOU (from earlier)
+- KNOWN_ISSUES #14 and #16 (lease renewal, atomic fencing): need a live Snowflake test before any SQL change.
+- KNOWN_ISSUES #13 (core.autocrlf): needs your decision.
+- CP-39 two-user manual test: needs two real accounts.
+
+CP-49 TASK 2 (deferred): POST /sows/{sow_id}/collab/insert
+- A service can place content with nobody online only if the insert waits in a durable table until an editor applies it.
+- Needs: owner approval of a new SOW_COLLAB_* pending-insert table (migration, CP-16/17) and a retention decision (CP-66).
+- Start when: a backend job needs to insert generated content with no user in the document.
+
+CP-50 STREAMING PREVIEW HOOKUP (waiting)
+- editorApi.beginStream is built and tested, but no screen calls it. The LLM currently runs on the server as whole-draft
+  generation. When a streaming LLM endpoint exists, call beginStream, push each token, then commit (or cancel / fail).
+- Start when: a streaming generation endpoint is added on the backend.
