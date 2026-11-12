@@ -1,33 +1,124 @@
 THINGS PENDING (kept up to date by Claude; not committed)
+Last updated: 2026-11-12
 
-DEFERRED BY TEAM AGREEMENT (2026-11-11, budget). Do later, not now.
+=====================================================================
+A. MUST DO BEFORE ROLLOUT (the editor is not ready for users without these)
+=====================================================================
 
-CP-44: Socket routing and connection limits (multi-instance)
-- Only needed once more than one Owner instance is deployed behind a load balancer.
-- Start when: the first second Owner instance is planned for deployment.
-- Plan section: sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md (CP-44, line ~1521).
+A1. Redaction is not complete. Redacted text still exists in the Owner's
+    update history (SOW_COLLAB_UPDATE) and in older snapshots.
+    Plan: after a redact, snapshot the current (redacted) state, then delete
+    earlier updates for that SOW. Reuses CP-43 compaction. Needs review and a
+    test on a copy. Running it on the real database needs approval.
+    Where: blend_ode_be/sow_module/collab/src/owner (snapshot and persist),
+    src/data/snowflake-store.ts (pruneUpdates).
 
-CP-46: Scale harness and scenario scripts
-- Builds the simulated-editor test harness. Expensive in compute and tokens.
-- Start when: close to the real production rollout, after CP-44.
-- Plan section: CP-46, line ~1582.
+A2. Browser checks for CP-49 to CP-57 have never been run (two real browsers).
+    Steps are in TODO_FOR_YOU.txt. Note: the live editor could not open a
+    session from the draft screen until 2026-11-12 (wrong SOW id format,
+    fixed). Anything tested before that date was not really tested live.
 
-CP-47: Scale measurements and approved gates
-- Measures behaviour with 10 to 100 simulated editors and needs approved gates. Most expensive item in the plan.
-- Start when: after CP-46, and only with the owner's approval of the cost.
-- Plan section: CP-47, line ~1612.
+A3. Live Snowflake checks still open (KNOWN_ISSUES):
+    - #14 per-document lease renewal
+    - #16 atomic fencing check (needs a change to SQL; check the real schema first)
+    - guest expiry and revocation filter (SQL in _participants)
+    - audit rows written by the live editor (content_inserted, comment_*,
+      legacy_open_report, room_replaced)
 
-OPEN, NEEDS YOU (from earlier)
-- KNOWN_ISSUES #14 and #16 (lease renewal, atomic fencing): need a live Snowflake test before any SQL change.
-- KNOWN_ISSUES #13 (core.autocrlf): needs your decision.
-- CP-39 two-user manual test: needs two real accounts.
+A4. Secrets: blend_ode/.env.development is committed with secrets
+    (KNOWN_ISSUES #1). Rotate them, then remove the file from git history.
+    Do NOT commit it again.
 
-CP-49 TASK 2 (deferred): POST /sows/{sow_id}/collab/insert
-- A service can place content with nobody online only if the insert waits in a durable table until an editor applies it.
-- Needs: owner approval of a new SOW_COLLAB_* pending-insert table (migration, CP-16/17) and a retention decision (CP-66).
-- Start when: a backend job needs to insert generated content with no user in the document.
+A5. Decide ADR-013 and ADR-014 (ADR-013 block ids, ADR-014 refuse outside
+    changes). Both are still "needs owner confirmation".
 
-CP-50 STREAMING PREVIEW HOOKUP (waiting)
-- editorApi.beginStream is built and tested, but no screen calls it. The LLM currently runs on the server as whole-draft
-  generation. When a streaming LLM endpoint exists, call beginStream, push each token, then commit (or cancel / fail).
-- Start when: a streaming generation endpoint is added on the backend.
+=====================================================================
+B. BUILD LATER (planned, not started)
+=====================================================================
+
+B1. CP-59 Suggestions: create (commenter+), accept/reject (editor+),
+    audit events suggestion_created / _accepted / _rejected, sign-off rule
+    (pending suggestions block sign-off, as checkpoint_native_editor does).
+
+B2. CP-60 Guest reviewers: guest session variant (commenter + suggest) from an
+    active, unexpired, unrevoked invitation; guest page in the Lexical editor.
+
+B3. CP-61 Guest revocation wired to notify_access_changed; role matrix
+    (5 roles x 11 actions x 3 layers); phaseG_report.md.
+
+B4. CP-62/63 Phase H: version history and finalize lock details.
+
+B5. Document MentionNode (mentions inside the document text, not only in
+    comments). Plan CP-55 task 1.
+
+B6. Edit and delete of comments are not audited (no native event names).
+    Decide names with the owner, then add to _audit_review_changes.
+
+B7. Mention delivery happens at checkpoint (quiet period, default 30 s).
+    Consider sending mentions from an explicit Save immediately (already
+    done) or from a short dedicated timer.
+
+B8. Comment storage has two homes: SOW_NATIVE_DOCUMENTS.COMMENT_THREADS (live
+    editor, native editor) and SOW_DRAFT_VERSIONS.COMMENTS (CKEditor draft
+    comments). Decide how they relate before CKEditor is removed (CP-74).
+
+B9. Hover highlight uses the CSS Custom Highlight API. Add a fallback for
+    browsers without it, if they are in scope.
+
+B10. Participants endpoint sits behind the Lexical flag. Check whether the
+     native editor needs the same list.
+
+B11. Finalize (CP-62): text is read-only for everyone after finalize;
+     commenters keep comment and resolve (done 2026-11-12). Check the role
+     table and the decisions doc still match this.
+
+=====================================================================
+C. TEST HEALTH (known, to clean up)
+=====================================================================
+
+C1. Frontend: 2 lint errors in testing/chunks.test.ts and testing/intake.test.ts
+    (jest/no-conditional-expect). Pre-existing.
+
+C2. Frontend: SowLexicalHarness fails intermittently under full parallel load
+    (passes alone). Needs a longer timeout or a fix to its waits.
+
+C3. Frontend: antd's auto-sizing TextArea fails under jsdom ("parameter 1 is
+    not of type 'Node'"). Tests substitute a plain textarea. Other component
+    suites in this checkout (RiskFlags, DraftEditorScreen integration, SignOff,
+    DealDesk) hit the same or a similar failure; they are pre-existing.
+
+C4. Backend: 9 pre-existing failures (duration and template tests). Not
+    related to this work. Fix or accept.
+
+C5. Axe check does not test colour contrast (jsdom cannot compute it). Check
+    contrast by hand in a browser.
+
+C6. blend_ode core.autocrlf on this Windows checkout breaks hash-exact tests
+    (KNOWN_ISSUES #13). Owner decision.
+
+C7. The fidelity script (blend_ode_be/sow_module/collab: npm run
+    fidelity:report) has not been run on real drafts. Needs exports from the
+    owner (TODO_FOR_YOU, CP-53).
+
+=====================================================================
+D. DECISIONS ALREADY MADE (do not reopen without a reason)
+=====================================================================
+
+D1. D-B1 = option A: live comment threads are stored in the Yjs document and
+    persisted into SOW_NATIVE_DOCUMENTS.COMMENT_THREADS / SUGGESTIONS at
+    checkpoint. REVISION is not bumped for comment writes.
+
+D2. LLM insert: option A. Audit stores a hash only (no prompts, no raw
+    responses).
+
+D3. Save-then-replace: any action that replaces the whole draft first saves
+    live edits (refused if that fails), then reloads the room.
+
+D4. A finalized SOW: editors lose edit, commenters keep comment and resolve,
+    viewers are disconnected (4410). Text saves are refused with 409.
+
+D5. Deferred by team agreement (budget): CP-44 (multi-instance), CP-46 and
+    CP-47 (scale tests). Start only when the trigger in the build plan happens.
+
+D6. Participants list = the native editor's list (_participants), exposed at
+    GET /sows/{id}/collab/participants.

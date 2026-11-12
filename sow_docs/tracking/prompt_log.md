@@ -1143,3 +1143,13 @@ Registry (new or changed):
 Open questions for the user: (1) purge redacted text from the update log and snapshots (needs compaction with no
 safety tail, reviewed against CP-43); (2) audit events for edit and delete; (3) commenting after finalize.
 Handoff to next prompt: CP-59 (suggestions) is not started. CP-60 to CP-63 are not started.
+
+## Finalize: commenters keep access after a SOW is finalized (2026-11-12)
+Summary: A finalized SOW now stays open, read-only for the text, for anyone who can comment. Editors lose
+the edit capability (ROLE_CHANGED) and stay connected; viewers are still disconnected (4410). FastAPI records
+comments before the lock check and refuses text changes with 409. The Owner sends comment-only checkpoints with
+the stored HTML.
+Decisions/assumptions: plan CP-62 wording followed; editors are read-only after finalize, not disconnected.
+Registry: blend_ode_be connection.ts (readOnlyWhenLocked, applyRoleChange sends when capabilities change),
+checkpoint.ts (locked branch), collab_internal.py (comments before lock check), server.test.ts, live_comments tests.
+Open questions: none new.
