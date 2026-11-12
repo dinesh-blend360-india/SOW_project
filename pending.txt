@@ -2,6 +2,13 @@ THINGS PENDING (kept up to date by Claude; not committed)
 Last updated: 2026-11-12
 
 =====================================================================
+A0. TEMPORARY CODE IN THE BRANCH (remove or comment out before rollout)
+    - blend_ode/src/App.tsx: demo routes (4 lines added).
+    - blend_ode/src/sow_module/editor/SowSandbox.tsx: editor sandbox page.
+    Both were pushed on the request of the owner so the team can see them.
+    Decide: delete, or move the sandbox out of src/ and comment out the routes.
+    Not related: blend_ode/.env.development (secrets) must NOT be pushed (see A4).
+
 A. MUST DO BEFORE ROLLOUT (the editor is not ready for users without these)
 =====================================================================
 
