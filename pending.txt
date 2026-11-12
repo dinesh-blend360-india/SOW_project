@@ -143,3 +143,14 @@ CP-63/64/65 (2026-11-12) -- follow-ups
 
 A0 (update 2026-11-12): /sow-sandbox now shows the real live-editor components (comments panel, suggestions, roles)
 in memory only, to see them work. Still temporary: remove the route and SowSandbox.tsx before rollout.
+
+CP-66 (2026-11-13)
+- DECISION NEEDED: retention period for live updates (SOW_COLLAB_UPDATE, pruned by compaction) and for the live audit rows.
+- Metrics: only checkpoint_ms is emitted; the other CP-66 metrics are not yet (queue depth, flush time, durable-ack latency, lease events, rooms and sockets).
+- Runbook (sow_docs/tracking/runbook_local.md) is written from the code and not yet rehearsed; items marked (verify).
+- Rollback to CKEditor is CP-73; the runbook describes only the manual switch.
+
+CP-67 / CP-68 (2026-11-13)
+- Load gates that need Snowflake (durable-ack p95 <= 1500 ms, failover <= 30 s, zero loss) are NOT measured: the grant is pending.
+- Broadcast p95 at 100 clients is 84 ms locally (informational; no formal gate). Decide whether it is acceptable.
+- Pre-existing frontend failures (162 tests in 8 suites) and backend failures (9): see test_matrix.md section 5.

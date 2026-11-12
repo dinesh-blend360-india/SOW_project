@@ -1230,3 +1230,20 @@ Download: same handler as CKEditor (existing chrome test).
 and the block ids, on an in-memory Yjs document. A role switch shows viewer, commenter, editor and admin. No new component
 was built for the sandbox. The sandbox still has no server and saves nothing.
 Checked: type-check and lint clean; dev server returns the page (200). A browser run has not been done from here (TODO_FOR_YOU).
+
+## CP-66: Audit, metrics and local runbook (2026-11-13) -- retention decision open
+Audit (existing audit table, best effort): session_joined, session_left, access_changed (role change), checkpoint_created
+(version and revision), room_locked (finalize). Each event has an allow-list of fields; values must be tokens. Sentinel test
+(observability.test.ts) proves document text cannot reach audit rows or metric lines.
+Metrics: checkpoint_ms only. Not yet: durable-ack latency, queue depth, flush time, Snowflake statements, lease renewals and
+losses, rooms and sockets.
+Runbook: sow_docs/tracking/runbook_local.md (from the code; not yet rehearsed).
+Open: retention decision for live updates and audit rows.
+
+## CP-67: Test matrices (2026-11-13)
+sow_docs/tracking/test_matrix.md: roles x actions at three layers, document lifecycle, intake sources, failure cases, and
+full suites. No new failures; the pre-existing failures are listed separately.
+
+## CP-68: Load results (2026-11-13) -- local only
+Broadcast at 10, 25, 50, 100 clients re-run (scale_results.md). p95 84 ms at 100 clients. The Snowflake-dependent gates
+(durable-ack, failover, zero loss) are not measured. Needs your decision on the measured values before a gate is called met.
