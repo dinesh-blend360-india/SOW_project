@@ -927,3 +927,44 @@ Registry (new or changed):
 - table / migration: none
 Open questions for the user: none.
 Handoff to next prompt: CP-51 (legacy drafts open safely, plus the Open Items scroll fix and save parity).
+
+## CP-51: Existing drafts open in Lexical (legacy documents) (2026-11-12)
+Summary: Opening an older (CKEditor-era) draft is now reported and safe. The Owner converts the stored HTML
+the way the editor does (headless, into a scratch Yjs document) and uses the result two ways: a conversion
+report for SOW admins (what the new editor changes) and a no-op check for checkpoints. Also done here: a
+batch script that checks a set of draft files, the Open Items navigation fix, and save parity.
+Decisions/assumptions:
+- Important fact found while building this: `save_sow_draft` updates the current version IN PLACE (it only
+  creates a version for an explicit intake sync). So a checkpoint of an unedited older draft would not add a
+  version, it would overwrite the stored legacy HTML. That is why the no-op check matters: an unedited older
+  draft is detected by converting the stored draft the same way and comparing normalized HTML. Equal means
+  the content is the same, so skipping can never lose an edit. Only when the Owner knows the revision it
+  opened; otherwise it saves as before.
+- The conversion report holds element and class counts, never document text. It is kept in the live state
+  (`seed` map, `conversionReport`), recorded in the audit log as `legacy_open_report` when something changed,
+  and sent only to SOW admins as `CONVERSION_REPORT` after READY. The seed map itself is readable by every
+  client of the room in the Yjs state (counts only); the notice is shown to admins only. After an Owner
+  restart the report is not re-sent until the document is seeded again (the seed map is not persisted).
+- No new dependency: the report is a before/after count of elements and classes, so `markdown-it` (used by the
+  shared intake) is not needed on the Owner.
+- The fidelity script (`npm run fidelity:report` in sow_module/collab) reads only the files and folders given,
+  writes only --out and --markdown, never connects to Snowflake, refuses to overwrite an input file, and exits 1
+  when text is lost or a draft cannot be converted. The report can contain draft words: keep it private.
+- Save parity goes through the Owner, not the REST save: a REST save changes the draft revision, which the
+  Owner treats as an outside change and refuses. `DRAFT_META` (open items, add-ins present, SOW name) is kept
+  on the Room, sent with every checkpoint (timer, explicit, last client left) and re-sent by the editor after a
+  reconnect. The name needs `rename`. The backend retries once with the stored details if it rejects the
+  reported ones, so details can never block content from saving.
+- Open Items: the editor is found with one shared selector (CKEditor classes plus `sowx-editable`). Heading
+  anchors (`id`) are not allowed by the contract, so navigation falls back to the existing text matching.
+Registry (new or changed):
+- file: blend_ode_be/sow_module/collab/src/owner/legacy-baseline.ts: legacyOpenDoc, legacyOpenHtml, buildConversionReport
+- file: .../owner/fidelity-batch.ts and sow_module/collab/scripts/fidelity-report.ts: batch check and CLI
+- file: .../owner/draft-meta.ts: parseDraftMeta
+- changed: seed.ts (report), checkpoint.ts (no-op check, draft details), connection.ts (CONVERSION_REPORT, DRAFT_META), room.ts (draftMeta)
+- messages: CONVERSION_REPORT (server to admin), DRAFT_META (client to Owner); CheckpointRequest gains openItems, addedAddIns, sowName
+- endpoint: POST /internal/sow-collab/checkpoint: accepts openItems, addedAddIns, sowName (optional)
+- component: ConversionReportNotice (admin only); editor/editorDom.ts (shared selector); sowx.css open-item highlights
+- table / migration: none
+Open questions for the user: none new.
+Handoff to next prompt: CP-52 (regeneration, intake sync, reset to latest in a live room); it also owns routing the whole-draft replacement flows into the live editor.

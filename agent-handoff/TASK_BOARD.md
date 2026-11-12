@@ -58,16 +58,14 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 - **Description**: Deferred. The editor applies inserts because HTML-to-Lexical conversion exists only in
   the browser; a service call with nobody online needs somewhere durable to wait.
 
-### SOW-CP51: Existing (CKEditor) drafts open safely in Lexical
 ### SOW-CP52: Regeneration, intake sync, reset to latest in a live room
 ### SOW-CP53: Intake messages, fuzzing, Phase F close report
 - **Priority**: Medium (CP-51 specifically is correctness-on-real-data, worth prioritizing over 49/50)
 - **Affected repository**: both (mostly blend_ode_be for 51/52)
 - **Relevant files**: `sow_docs/build_plan/SOW_EDITOR_BUILD_PROMPTS_v1.md` (CP-50 to CP-53 sections)
-- **Description**: Not started — see the build plan for each checkpoint's own task list. CP-51 now also
-  carries the Open Items scroll fix and a save-parity step (open items and add-ins recomputed after a
-  Lexical checkpoint); CP-52 also owns routing the whole-draft replacement flows (continue, intake sync,
-  suggested-fix accept, restore) into the live editor.
+- **Description**: Not started — see the build plan for each checkpoint's own task list. CP-52 also owns
+  routing the whole-draft replacement flows (continue, intake sync, suggested-fix accept, restore) into the
+  live editor.
 
 ### Phase G (CP-54–61): Mentions, comments, suggestions, guests
 - **Priority**: Medium; CP-54 is a decision gate needing the owner's answer before coding starts
@@ -145,6 +143,12 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 ---
 
 ## COMPLETED
+
+### SOW-CP51: Existing drafts open in Lexical — done 2026-11-12
+- **Affected repository**: both
+- **Description**: Conversion report for SOW admins, no-op checkpoint check for unedited older drafts (stored
+  HTML is never rewritten by opening), batch fidelity script, Open Items navigation in the live editor, and
+  save parity (open items, add-ins present and SOW name stored by live-editor saves). See `prompt_log.md` CP-51.
 
 ### SOW-CP50: Streaming preview and smart paste — done 2026-11-12
 - **Affected repository**: blend_ode

@@ -118,7 +118,10 @@ guest invitation still succeeds even if the Node service is unreachable).
 - Endpoint on the Owner: `wss://<owner>/collab` (the path is exact; requests to any other path are dropped).
   The ticket is sent in the first `HELLO` message, never in the URL. Protocol version `1`.
 - Client to server: `HELLO {type, protocol, ticket}`, `REAUTH {type, ticket}`, `CHECKPOINT_NOW {type}`, `CONTENT_INSERTED {type, idempotencyKey, contentHash, target, source, model?, requestId?}`
-  (CP-49: audit notice for inserted content; needs `edit`; hash only, never content or prompts).
+  (CP-49: audit notice for inserted content; needs `edit`; hash only, never content or prompts),
+  `DRAFT_META {type, openItems?, addedAddIns?, sowName?}` (CP-51: details stored with every checkpoint; needs `edit`,
+  the name needs `rename`). Server to client also `CONVERSION_REPORT {type, report}` (CP-51, SOW admins only).
+  The internal checkpoint request accepts optional `openItems`, `addedAddIns`, `sowName`.
   Binary frames: `[kind][payload]`, kind `0` = SYNC (Yjs update), `1` = AWARENESS, `2` = CHUNK (one
   piece of a larger SYNC payload; 256 KB pieces, in order).
 - Server to client: `READY`, `DURABLE`, `ROLE_CHANGED`, `REAUTH_REQUIRED`, `CHECKPOINTED {version, revision, upToSeq?}`,

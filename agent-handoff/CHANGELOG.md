@@ -245,3 +245,11 @@ checkpoint and its own review were done entirely on Sonnet.
 
 ### blend_ode
 - `feat(sow_module)` streaming preview (local ghost, single commit) and Markdown smart paste with undo to plain text
+
+## 2026-11-12 — CP-51: existing drafts open in the live editor
+
+### blend_ode
+- `feat(sow_module)` conversion report notice for SOW admins, Open Items navigation in the live editor, draft details (open items, add-ins, name) reported to the Owner
+
+### blend_ode_be
+- `feat(sow_module)` Owner: conversion report, no-op checkpoint check for unedited older drafts, DRAFT_META, fidelity batch script; backend checkpoint accepts the reported details

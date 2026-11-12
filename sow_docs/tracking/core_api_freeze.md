@@ -61,3 +61,10 @@ Close codes: `4401` bad ticket, `4403` access removed (do not reconnect), `4410`
   (one 256 KB piece of a larger SYNC payload, in order, max 16 MB assembled). Close code `1013`
   (room full, more than 100 connections) added. Config `COLLAB_CHECKPOINT_QUIET_MS` (default 30000)
   documented. Existing frame kinds and close codes are unchanged.
+
+- **2026-11-12 (CP-51, non-breaking additions):** server text message `CONVERSION_REPORT {report}` (to SOW
+  admins only, once after READY, only when opening an older draft changes it; names and counts only). Client
+  text message `DRAFT_META {openItems?, addedAddIns?, sowName?}` (needs `edit`; the name needs `rename`;
+  open items at most 200, each at most 4,000 characters of JSON, known fields only). Internal checkpoint
+  request gains optional `openItems`, `addedAddIns`, `sowName`; absent means keep the stored values, and the
+  backend retries once with the stored values if it rejects the reported ones. No existing field changed.

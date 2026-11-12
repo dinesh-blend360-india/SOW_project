@@ -279,3 +279,19 @@ fail on the old code and pass on the fix. Original description kept below for hi
 - **OPEN, not verified here:** smart-paste undo-to-plain was tested with the standard history. In the live
   editor the Yjs undo manager does the undo; it should tag its changes as historic, but this was not
   exercised with a real session.
+
+## Update 2026-11-12 (CP-51)
+- **RESOLVED (code, needs your manual check):** the Lexical save did not store open items, add-ins present or the
+  SOW name; they now go with every checkpoint (see 2026-11-12 CP-49 update). Open Items click-to-scroll now finds
+  the live editor. Both are in TODO_FOR_YOU.
+- **RESOLVED:** an unedited older draft is no longer rewritten when a checkpoint runs. Note `save_sow_draft`
+  updates the current version in place, so before this the stored legacy HTML would have been overwritten.
+- **OPEN, by design:** after an Owner restart a SOW admin is not shown the conversion report again until the
+  document is seeded again (the seed map is not persisted). The audit row `legacy_open_report` remains.
+- **OPEN, design limit:** the no-op check compares what the Owner renders for the live document with what it
+  renders for the stored draft converted the same way. Editor transforms that change the live document (for
+  example placeholder or list rules) can make an unedited document look edited; that only means one extra
+  in-place save, never a lost edit.
+- **OPEN:** heading anchors (`id`) are not in the allowlist, so open items that carry a `targetId` cannot be
+  found by id in the live editor; navigation falls back to text matching, which is what CKEditor did when the
+  id was missing.
