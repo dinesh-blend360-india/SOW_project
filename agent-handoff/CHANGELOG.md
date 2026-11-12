@@ -253,3 +253,12 @@ checkpoint and its own review were done entirely on Sonnet.
 
 ### blend_ode_be
 - `feat(sow_module)` Owner: conversion report, no-op checkpoint check for unedited older drafts, DRAFT_META, fidelity batch script; backend checkpoint accepts the reported details
+
+## 2026-11-12 — CP-52: regeneration, intake sync and reset to latest in a live room
+
+### blend_ode
+- `feat(sow_module)` reload-latest in the live editor, room-replaced notice, latest-draft wiring on the screen
+
+### blend_ode_be
+- `feat(sow_module)` Owner: save-then-replace (prepare/replace internal endpoints), RELOAD_LATEST, saved-content hash, stale rooms
+- `feat(sow_module)` hooks on regenerate, intake sync, continue and accept-suggestion

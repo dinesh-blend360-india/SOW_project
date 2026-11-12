@@ -144,6 +144,12 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 
 ## COMPLETED
 
+### SOW-CP52: Regeneration, intake sync, reset to latest in a live room — done 2026-11-12 (not browser-tested)
+- **Affected repository**: both
+- **Description**: Save-then-replace for regenerate, intake sync, continue and accept-suggestion; "Reload latest" with
+  revision check and discard confirmation; saved-content hash so a reopened room is replaced or marked stale.
+  See `prompt_log.md` CP-52. Two-browser checks still to be run by the owner.
+
 ### SOW-CP51: Existing drafts open in Lexical — done 2026-11-12
 - **Affected repository**: both
 - **Description**: Conversion report for SOW admins, no-op checkpoint check for unedited older drafts (stored

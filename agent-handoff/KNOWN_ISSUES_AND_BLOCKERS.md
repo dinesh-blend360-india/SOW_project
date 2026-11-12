@@ -295,3 +295,13 @@ fail on the old code and pass on the fix. Original description kept below for hi
 - **OPEN:** heading anchors (`id`) are not in the allowlist, so open items that carry a `targetId` cannot be
   found by id in the live editor; navigation falls back to text matching, which is what CKEditor did when the
   id was missing.
+
+## Update 2026-11-12 (CP-52)
+- **OPEN, not browser-tested:** the replacement and reopen flows were tested with the WebSocket server and the
+  internal endpoints, not with two real browsers. Run the checks in TODO_FOR_YOU.txt before rollout.
+- **OPEN:** rooms opened before this change have no saved-content hash. On their next open they are marked stale
+  and editors are asked to reload (with confirmation) when the draft changed. Nothing is lost; it is only
+  conservative.
+- **OPEN:** the Owner keeps the room's draft meta and the stale flag in memory; after a restart they are restored
+  from the document (hash) but the stale flag is recomputed on open.
+- **OPEN, design:** every first open of a document makes one extra FastAPI document-state call for the reopen check.

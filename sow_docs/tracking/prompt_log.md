@@ -968,3 +968,40 @@ Registry (new or changed):
 - table / migration: none
 Open questions for the user: none new.
 Handoff to next prompt: CP-52 (regeneration, intake sync, reset to latest in a live room); it also owns routing the whole-draft replacement flows into the live editor.
+
+## CP-52: Regeneration, intake sync and reset to latest (2026-11-12)
+Summary: Actions that replace the whole draft now handle an open live room. Before regenerate, intake sync
+(a save that creates a version), continue-from-version and accept-suggestion, FastAPI asks the Owner to save
+the live document (a restorable version). If that save fails, the action is refused. After the action,
+FastAPI tells the Owner to reload the room. "Reload latest" is a live editor action: it confirms, checks the
+expected draft revision, and asks again before dropping unsaved edits. Everyone in the room gets the
+replacement as an ordinary update plus a notice.
+Decisions/assumptions:
+- Task 1 list (log): regenerate (POST /drafts/generate), intake sync (POST /drafts/save with create_version),
+  continue a version (POST /drafts/versions/{v}/continue), accept a suggested version (POST
+  /sows/{id}/suggested-versions/{v}/accept). Restore is the continue flow.
+- Task 2 rules: confirmation is the editor's "Reload latest" dialog; checkpoint first (prepare-replace);
+  replace as one Yjs transaction (applyOwnerChange); visible notice (ROOM_REPLACED). Refusal rules: no
+  replacement when unsaved edits could not be saved, unless the person confirmed the discard (reload only).
+- Owner changes are persisted and sent with the Owner's earlier changes included (applyOwnerChange). The
+  Owner's Yjs client is one client, so a later update that depends on an earlier one must carry it.
+- Reopen after a replacement: the Owner keeps a hash of the last saved content in the document (meta map,
+  persisted). On reopen, if the stored state matches that hash, it is replaced with the new draft; if not
+  (or no hash exists yet, as for older rooms), the room is marked stale and editors are asked to reload.
+  Nothing is dropped silently.
+- A stale expected revision refuses the reload; a draft that moved again is never replaced blindly.
+- Audit: room_replaced rows, with a hash of any dropped content, never its text.
+- Not verified: two-browser check of the replacement and reopen flows; a live Snowflake check of the audit row.
+Registry (new or changed):
+- file: blend_ode_be/sow_module/collab/src/owner/yjs-replace.ts: applyOwnerChange, replaceRootContent
+- file: .../owner/room-replace.ts: replaceRoomWithLatest, saveLiveContentFirst
+- file: .../owner/room-baseline.ts: recordSavedBaseline, liveMatchesSavedBaseline
+- changed: checkpoint-coordinator.ts (isDirty, markUnsaved, markReplaced, recordBaseline), connection.ts (RELOAD_LATEST, answerReload, stale notice), room.ts (stale), server.ts (/internal/room/prepare-replace, /internal/room/replace, reconcileReopened)
+- messages: RELOAD_LATEST (client to Owner), ROOM_REPLACED (Owner to room); error code unsaved_changes
+- endpoints: POST /internal/room/prepare-replace, POST /internal/room/replace (service key)
+- blend_ode_be/src/sow_module/collab_internal.py: prepare_live_room_for_replace, notify_draft_replaced
+- blend_ode_be/src/sow_studio/routers.py: hooks on generate, save (create_version), continue, accept
+- frontend: editor/ReloadLatest.tsx (RoomReplacedNotice, ReloadLatestOffer), editorApi.reloadLatest, provider requestReloadLatest, DraftEditorScreen handleRoomReplaced / handleFetchLatestDraft
+- table / migration: none
+Open questions for the user: none new. Note: the reopen reconciliation adds one FastAPI document-state call on each first open of a document.
+Handoff to next prompt: CP-53 (intake messages, fuzzing, Phase F close). Before CP-53 the two-browser checks in TODO_FOR_YOU must be run.
