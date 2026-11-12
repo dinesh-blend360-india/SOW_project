@@ -154,3 +154,8 @@ CP-67 / CP-68 (2026-11-13)
 - Load gates that need Snowflake (durable-ack p95 <= 1500 ms, failover <= 30 s, zero loss) are NOT measured: the grant is pending.
 - Broadcast p95 at 100 clients is 84 ms locally (informational; no formal gate). Decide whether it is acceptable.
 - Pre-existing frontend failures (162 tests in 8 suites) and backend failures (9): see test_matrix.md section 5.
+
+SECURITY (CP-69 / CP-70, 2026-11-13) -- see sow_docs/tracking/security_pass.md
+- F1 HIGH (blocks progress per plan): blend_ode_be/src/common/database.py uses insecure_mode=True. Decide: fix now, or accept in writing.
+- F2 MEDIUM (verify): the Node service's Snowflake role is not confirmed least-privilege. Needs a Snowflake check: only SOW_COLLAB_* tables.
+- F3 MEDIUM: no WebSocket message rate limit. Decide the limit values, then build a per-connection budget.

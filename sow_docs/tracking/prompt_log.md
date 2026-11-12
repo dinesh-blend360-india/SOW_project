@@ -1247,3 +1247,20 @@ full suites. No new failures; the pre-existing failures are listed separately.
 ## CP-68: Load results (2026-11-13) -- local only
 Broadcast at 10, 25, 50, 100 clients re-run (scale_results.md). p95 84 ms at 100 clients. The Snowflake-dependent gates
 (durable-ack, failover, zero loss) are not measured. Needs your decision on the measured values before a gate is called met.
+
+## CP-69: Security, first half (2026-11-13)
+Checks: tickets (tamper, wrong SOW, wrong user, cross-SOW reuse added), internal endpoints (missing and wrong key), SQL binds
+(all Node and new Python SQL checked), sentinel secret (existing tests pass), bundle check (no private key in the production
+build; no server-side secret values found). Findings F1 to F5 in sow_docs/tracking/security_pass.md.
+Finding F1 (HIGH): database.py `insecure_mode: True` is reported, not changed. Per the plan, this blocks progress until the
+owner fixes or accepts it.
+Also fixed: an import placed inside nativeEditorApi.ts (CP-60) broke the production build (eslint import/first). Build passes.
+Node role on Snowflake (F2): not verified from this session.
+
+## CP-70: Security, second half (2026-11-13)
+Server content fuzzing: 1500 seeded random documents through sanitize_draft_html, 0 violations (test_sow_module_security_fuzz.py).
+WebSocket abuse: oversized frame closed (1009); malformed frame answered and closed (1002); flood accepted with no limit (F3).
+REST role regression: live endpoints refuse users without the feature; guest session refuses a missing token; internal endpoints
+refuse a wrong key (test_sow_module_endpoint_roles.py).
+Socket role matrix: unchanged, 12 tests passing.
+Blocked on the owner: F1 (HIGH). F2 and F3 need your decision too.
