@@ -1105,3 +1105,41 @@ Registry (new or changed):
 - table / migration: none
 Open questions for the user: none new.
 Handoff to next prompt: CP-57 (suggestions, resolve, and what remains of Phase G) after the browser checks in TODO_FOR_YOU.
+
+## CP-57: Comments panel (2026-11-12)
+Summary: The comments panel now lists threads with an Open / Resolved / All filter, resolve and reopen (commenters and
+above), reply, edit and delete of one's own comment (authors), redact (SOW admins), an orphan badge when the anchored
+text has gone, a "Go to text" button and Enter on a focused thread to jump to the block, a loading skeleton, an error
+alert and an empty state. Viewers see it read-only.
+Decisions/assumptions:
+- Redaction, edit and delete are per comment; deleting the last comment removes the thread.
+- Authors cannot edit or delete a redacted comment.
+- Admin role is the SOW admin flag passed in by the editor; the server still decides what is stored (CP-58).
+- Accessibility: named buttons, labelled text areas, role-labelled radio group, keyboard Enter to jump. An axe check
+  runs in tests (serious and critical rules) for viewer, commenter and admin. Colour contrast is not checked in jsdom;
+  it is a manual check.
+- "Look of the existing review screens": not compared visually; the panel uses antd and sowx- classes.
+Registry (new or changed):
+- frontend: editor/CommentsPanel.tsx (rewritten: filter, resolve, edit, delete, redact, orphan badge, states)
+- frontend: editor/comments.ts: setResolved, editComment, deleteComment, redactComment, canEditComment, REDACTED_TEXT
+- frontend: editor/__tests__/CommentsPanel.test.tsx (21 tests), CommentsPanel.a11y.test.tsx (3 axe checks)
+- table / migration: none
+
+## CP-58: Comment persistence, audit and redaction (2026-11-12)
+Summary: Threads are stored through the checkpoint (CP-55) into the native columns with the native audit helper, so
+events are the native names: comment_created, comment_replied, comment_resolved, comment_reopened. Audit payloads hold
+ids only. A redacted comment is stored as "[redacted]" and the stored thread no longer contains the original text;
+a later checkpoint does not bring it back.
+Decisions/assumptions:
+- Edit and delete have no native audit event names. None were invented; they are not audited yet (open question).
+- Redaction removes the text from the current document and from every checkpoint. It does NOT yet remove the text from
+  the Owner's update log (SOW_COLLAB_UPDATE) and older snapshots. Until that purge exists, redaction is not complete.
+  This is the main open item of CP-58 and is recorded in KNOWN_ISSUES.
+- "Available after finalize for commenters": not built. A finalized SOW closes live sessions with 4410 (LOCKED), so
+  commenters cannot reach the document after finalize. This conflicts with the plan and needs a decision.
+Registry (new or changed):
+- backend tests: tests/test_sow_module_live_comments.py (17 tests: audit names, ids-only payloads, redacted text not stored)
+- no new endpoints or tables
+Open questions for the user: (1) purge redacted text from the update log and snapshots (needs compaction with no
+safety tail, reviewed against CP-43); (2) audit events for edit and delete; (3) commenting after finalize.
+Handoff to next prompt: CP-59 (suggestions) is not started. CP-60 to CP-63 are not started.

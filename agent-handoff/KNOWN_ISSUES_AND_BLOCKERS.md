@@ -315,3 +315,14 @@ fail on the old code and pass on the fix. Original description kept below for hi
 - **OPEN, not browser-tested:** hover highlight depends on the CSS Custom Highlight API; no highlight where it is missing.
 - **OPEN:** antd's auto-sizing TextArea fails under this jsdom setup ("parameter 1 is not of type 'Node'"). The panel's
   tests use a plain text area. The same failure affects other component suites in this checkout (pre-existing).
+
+## Update 2026-11-12 (CP-57/58)
+- **OPEN, blocks "complete redaction":** redacting a comment removes the text from the live document and from later
+  checkpoints, but the Owner's update log (SOW_COLLAB_UPDATE) and older snapshots still hold the original text. A purge
+  (snapshot the redacted state, then prune all earlier updates) is needed; it reuses CP-43 compaction and needs review.
+- **OPEN:** edit and delete of comments are not audited (the native editor has no event names for them).
+- **OPEN, plan conflict:** commenters cannot reach a finalized document (the Owner closes with 4410 LOCKED); the plan
+  asks for comments after finalize.
+- **OPEN:** colour contrast of the panel is not checked automatically (jsdom cannot compute it).
+- **OPEN, test flake:** SowLexicalHarness fails intermittently under full parallel load (passes alone); its waits need a
+  longer timeout. Not changed in this round.

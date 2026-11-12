@@ -280,3 +280,11 @@ checkpoint and its own review were done entirely on Sonnet.
 ### blend_ode_be
 - `feat(sow_module)` checkpoint stores live comment threads in the native columns and delivers mentions through the native code
 - `feat(sow_module)` Owner: commenters may change only the comments map; threads are sent when they change
+
+## 2026-11-12 — CP-57/58: comments panel, persistence, audit, redaction
+
+### blend_ode
+- `feat(sow_module)` comments panel: filters, resolve/reopen, edit and delete own comments, admin redaction, orphan badge, states
+
+### blend_ode_be
+- `test(sow_module)` audit event names and redacted-text storage tests for live comments

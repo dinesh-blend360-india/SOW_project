@@ -184,6 +184,11 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 ### SOW-CP53: Intake messages, fuzzing and Phase F close — done 2026-11-12
 - Removal wording shared by paste and LLM insert; legacy-open notice for everyone; fuzzing at 2000 documents per format; `phaseF_report.md`. Regression green. Real-draft fidelity run still pending (needs exports).
 
+### SOW-CP57/58: Comments panel and persistence, audit, redaction — built 2026-11-12 (not browser-tested)
+- Panel: filters, resolve, edit/delete own, admin redact, orphan badge, states, axe (serious/critical) per role.
+- Audit uses native event names. OPEN: redaction does not yet purge the Yjs update log and snapshots (blocks "complete").
+- OPEN: comments after finalize (conflicts with 4410 LOCKED). OPEN: audit for edit and delete (no native names).
+
 ### SOW-CP55/56: Mentions and anchored comment threads — built 2026-11-12 (not browser-tested)
 - Comments in the live document (option A), checkpoint to the native columns, mention delivery through the existing
   native code, hover highlight, orphan handling. Not built: document MentionNode, suggestions, resolve. See prompt_log.
