@@ -132,3 +132,11 @@ D6. Participants list = the native editor's list (_participants), exposed at
 
 B2a. DONE 2026-11-12: CP-60 guest page built (needs browser test, see TODO_FOR_YOU).
      suggest only. Server side is done (2026-11-12). Needs the native guest page flow as the model.
+
+CP-63/64/65 (2026-11-12) -- follow-ups
+- Finalize refuses when the Owner cannot save live edits (503). Confirm the message in a browser (TODO_FOR_YOU 2).
+- Export parity: the nested-list difference is fixed in our serializer; other differences are listed in
+  sow_docs/tracking/export_parity.md. Open: fonts and highlight colours in exported files; quality checks not compared with
+  CKEditor outputs for identical content. Needs real drafts (TODO_FOR_YOU 6).
+- Watermark follows the sign-off status, not live saves (by design). Confirm in a browser.
+- Owner flush endpoint and finalize wrapper change the finalize path: re-run the finalize tests after any change there.

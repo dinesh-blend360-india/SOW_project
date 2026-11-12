@@ -1202,3 +1202,25 @@ editors unaffected). Role matrix: capability table (5 roles x 10 actions), socke
 Historical views: read-only render is covered by an existing test (LexicalDraftEditor). Continue from a version: the live room
 is reloaded from the new draft (CP-52 hooks, tested). Checkpoints update the current version in place (tested; no create_version).
 Version management screen: not changed (as the plan says); not re-verified in a browser.
+
+## CP-63: Flush before finalize (2026-11-12)
+Owner: new internal endpoint POST /internal/room/flush (server.ts): saves the open room now; answers ok, no_room, locked, stale,
+invalid or unavailable.
+FastAPI: collab_internal.flush_live_room_before_finalize (20 s timeout). Refuses finalize with 503 when the save cannot be
+proven, 409 when the draft moved on. Does nothing when live editing is not configured or no room is open.
+Router: routers.py finalize_sow and publish_sow: after the existing checks, call flush (threadpool), then the unchanged
+publish_final_sow, then notify_finalized (locks the room, CP-45). Exact lines: the two `await run_in_threadpool(flush_live_room_before_finalize...)`,
+`result = publish_final_sow(...)` and `await run_in_threadpool(notify_finalized...)`, `return result`.
+Tests: test_sow_module_finalize_flush.py (11); server.test.ts 'flush before finalize' (5).
+
+## CP-64: Sign-off and publication with Lexical content (2026-11-12)
+Existing sign-off, publication, e2e, continue and native tests: 93 passing, none changed.
+Integration (Node): two editors edit, flush, finalize: final HTML is the last live content; later edits refused (server.test.ts).
+Publication: fixture from the Owner's Lexical pipeline (test_sow_module_lexical_publication.py, 3 passing).
+Watermark: the watermark reads the draft's sign-off status when the screen loads. A live checkpoint does not change sign-off
+status, so the watermark is unchanged by live saves. To confirm in a browser.
+
+## CP-65: Export, quality and open-items parity (2026-11-12)
+Golden tests: test_sow_module_export_parity.py (26). Differences: sow_docs/tracking/export_parity.md.
+Fix in our serializer: nested lists folded into their parent item (yjs-html.ts). Test: yjs-html.lists.test.ts.
+Download: same handler as CKEditor (existing chrome test).
