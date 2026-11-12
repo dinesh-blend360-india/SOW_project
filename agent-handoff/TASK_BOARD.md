@@ -68,7 +68,7 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
   live editor.
 
 ### Phase G (CP-54–61): Mentions, comments, suggestions, guests
-- **Priority**: Medium; CP-54 is a decision gate needing the owner's answer before coding starts
+- **Priority**: Medium. **BLOCKED on D-B1** (CP-54): owner must answer `sow_docs/tracking/design_collab_features.md` before CP-55 starts
 - **Description**: Not started. CP-59 (suggestions / track-changes-style editing) is the hardest
   single feature left in the whole plan — budget it accordingly.
 
@@ -180,3 +180,9 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 - **Affected repository**: root
 - **Description**: Created 2026-11-06, kept current every session since, rewritten (not just
   appended) 2026-11-11 for this handoff. See `SESSION_LOG.md` for the full session history.
+
+### SOW-CP53: Intake messages, fuzzing and Phase F close — done 2026-11-12
+- Removal wording shared by paste and LLM insert; legacy-open notice for everyone; fuzzing at 2000 documents per format; `phaseF_report.md`. Regression green. Real-draft fidelity run still pending (needs exports).
+
+### SOW-CP54: Decision gate (D-B1) and participants — partly done 2026-11-12, BLOCKED on D-B1
+- Design written (`design_collab_features.md`); participants endpoint built and tested. The owner must answer D-B1 before CP-55.

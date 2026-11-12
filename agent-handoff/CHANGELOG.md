@@ -262,3 +262,11 @@ checkpoint and its own review were done entirely on Sonnet.
 ### blend_ode_be
 - `feat(sow_module)` Owner: save-then-replace (prepare/replace internal endpoints), RELOAD_LATEST, saved-content hash, stale rooms
 - `feat(sow_module)` hooks on regenerate, intake sync, continue and accept-suggestion
+
+## 2026-11-12 — CP-53 (Phase F close) and CP-54 (design gate, participants)
+
+### blend_ode
+- `feat(sow_module)` removal notices for LLM insert; legacy-open notice for all roles with admin details; fuzzing at scale
+
+### blend_ode_be
+- `feat(sow_module)` GET /sows/{sow_id}/collab/participants (+ tests)

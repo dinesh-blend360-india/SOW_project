@@ -1005,3 +1005,40 @@ Registry (new or changed):
 - table / migration: none
 Open questions for the user: none new. Note: the reopen reconciliation adds one FastAPI document-state call on each first open of a document.
 Handoff to next prompt: CP-53 (intake messages, fuzzing, Phase F close). Before CP-53 the two-browser checks in TODO_FOR_YOU must be run.
+
+## CP-53: Intake messages, fuzzing and Phase F close (2026-11-12)
+Summary: Removal messages for LLM insert (everyone short, admins details) now share one helper with paste.
+Legacy-open notice is shown to everyone with counts for admins. Fuzzing at scale (2000 documents per format,
+fixed seed) checks the allowlist itself (tags, attributes, classes, styles); a control test proves the checker
+can fail. Phase F report written (`sow_docs/tracking/phaseF_report.md`). Full regression run.
+Decisions/assumptions:
+- Add-in insertion takes catalog wording, not user input; no runtime intake step. A test checks every catalog
+  add-in passes intake unchanged.
+- The checker treats class and style by their own rules; empty leftover class or style attributes are allowed
+  (they carry no value). Two checker false alarms were fixed, not the sanitizer.
+- The removal wording is in one place (`editor/removalMessage.ts`).
+- The fidelity report on real drafts is not run yet; it needs exports from the owner.
+Registry (new or changed):
+- file: blend_ode/src/sow_module/testing/intake.fuzz.test.ts: fuzz suite (2000 runs per format)
+- file: blend_ode/src/sow_module/editor/removalMessage.ts: removalWarning, describeRemovals, REMOVED_SHORT
+- changed: editorApi.ts (insert reports removals), LexicalDraftEditor.tsx (shared wording), ConversionReportNotice.tsx (isAdmin)
+- file: sow_docs/tracking/phaseF_report.md
+- table / migration: none
+Open questions for the user: none new.
+Handoff to next prompt: CP-54 (waiting on D-B1).
+
+## CP-54: Decision gate and the participants list (2026-11-12) -- waiting on D-B1
+Summary: Wrote `design_collab_features.md` (what the native editor stores, who can do what, what it lacks,
+the proposal). Built `GET /sows/{sow_id}/collab/participants` (reuses `_participants`, same gate as the
+collab session) with tests. Stopped before CP-55: the plan says not to continue until D-B1 is answered.
+Decisions/assumptions:
+- Participants endpoint uses the Lexical editor gate (FE_SOW_LEXICAL_EDITOR or FE_ADMIN), like the session endpoint.
+- Guest expiry and revocation are filtered in SQL; the tests check the query, not the database. Live check needed.
+Registry (new or changed):
+- endpoint: GET /sows/{sow_id}/collab/participants: people who can be mentioned (blend and guests)
+- file: blend_ode_be/src/sow_module/router.py: list_collab_participants
+- file: blend_ode_be/tests/test_sow_module_participants.py
+- file: sow_docs/tracking/design_collab_features.md
+- table / migration: none
+Open questions for the user: D-B1 (store live comments and suggestions in the Yjs document and persist them into the existing columns at checkpoint? Option A recommended).
+Handoff to next prompt: CP-55 (mentions) after D-B1 is answered.
