@@ -1153,3 +1153,23 @@ Decisions/assumptions: plan CP-62 wording followed; editors are read-only after 
 Registry: blend_ode_be connection.ts (readOnlyWhenLocked, applyRoleChange sends when capabilities change),
 checkpoint.ts (locked branch), collab_internal.py (comments before lock check), server.test.ts, live_comments tests.
 Open questions: none new.
+
+## CP-59: Suggestions (2026-11-12)
+Summary: Commenters and above suggest a replacement for a selected text (stored as NativeSuggestion shape in the
+document, `suggestions` map). Editors and SOW admins accept (the anchored text is replaced in one undoable edit; refused
+if the text has moved on) or reject. The Owner sends suggestions with checkpoints; it refuses a commenter who accepts,
+rejects or creates an already-decided suggestion. Sign-off (publish and finalize) is refused while any suggestion is
+pending (native rule). Audit names come from the native helper (suggestion_created / _accepted / _rejected).
+Decisions/assumptions: sign-off rule = native rule, as decided. The rule is enforced at publish and finalize, not at
+every autosave checkpoint (autosaves are not sign-off).
+Registry: frontend suggestions.ts, editorApi.replaceAnchorText, CommentsPanel suggestion UI, canDecideSuggestions;
+Owner live-comments.ts suggestionsFrom, validation.ts suggestionsOnlyAsCreated, checkpoint.ts sends suggestions;
+backend live_comments.assert_no_pending_live_suggestions, routers publish and finalize.
+Open: none new. Next: CP-60 (guest reviewers).
+
+## A1: Redaction purge built, OFF by default (2026-11-12)
+Summary: owner/purge.ts takes a snapshot of the redacted state and deletes earlier update rows for the deal (safety tail 0).
+Runs after a successful checkpoint of a room holding a redacted comment, only if COLLAB_PURGE_REDACTIONS=true.
+Tested on the in-memory store: the original text is gone from the update log and the new snapshot.
+NOT applied to Snowflake. Still open: old snapshot rows (their text) need a delete; that needs a new DataStore method
+and SQL, which needs approval.

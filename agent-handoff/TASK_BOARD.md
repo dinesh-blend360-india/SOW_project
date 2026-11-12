@@ -184,6 +184,11 @@ already done). Full history is in `SESSION_LOG.md` / `sow_docs/tracking/prompt_l
 ### SOW-CP53: Intake messages, fuzzing and Phase F close — done 2026-11-12
 - Removal wording shared by paste and LLM insert; legacy-open notice for everyone; fuzzing at 2000 documents per format; `phaseF_report.md`. Regression green. Real-draft fidelity run still pending (needs exports).
 
+### SOW-CP59: Suggestions — built 2026-11-12 (not browser-tested)
+- Create (commenter+), accept/reject (editor+), sign-off rule at publish and finalize. See prompt_log.
+
+### A1: Redaction purge — built, OFF by default, not applied to Snowflake (needs approval)
+
 ### SOW-CP57/58: Comments panel and persistence, audit, redaction — built 2026-11-12 (not browser-tested)
 - Panel: filters, resolve, edit/delete own, admin redact, orphan badge, states, axe (serious/critical) per role.
 - Audit uses native event names. OPEN: redaction does not yet purge the Yjs update log and snapshots (blocks "complete").
