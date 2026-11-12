@@ -1192,3 +1192,13 @@ REACT_APP_SOW_LEXICAL_EDITOR=true required for now (guests have no user flags).
 Tests: 5 page tests (flag off, missing link, code flow, wrong code, reopen). The antd components on the page are stood in
 by plain elements in these tests (jsdom issue, see CommentsPanel.test.tsx); browser testing is required.
 Still open: CP-61 (instant revocation push and the full role matrix).
+
+## CP-61: Guest revocation and role regression; Phase G report (2026-11-12)
+Revocation: the existing revoke path already calls notify_access_changed; now tested end to end (revoked guest disconnected,
+editors unaffected). Role matrix: capability table (5 roles x 10 actions), socket layer (12 tests), component layer
+(existing tests). Report: sow_docs/tracking/phaseG_report.md.
+
+## CP-62: Version history with the live editor (2026-11-12)
+Historical views: read-only render is covered by an existing test (LexicalDraftEditor). Continue from a version: the live room
+is reloaded from the new draft (CP-52 hooks, tested). Checkpoints update the current version in place (tested; no create_version).
+Version management screen: not changed (as the plan says); not re-verified in a browser.
